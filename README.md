@@ -1,3 +1,6 @@
+BMCManager
+==========
+
 `bmcmanager` is a tool for performing operations on rack units.
 
 `bmcmanager` is released under the terms of the GPL-3.0 license
