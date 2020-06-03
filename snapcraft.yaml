@@ -1,0 +1,36 @@
+name: bmcmanager
+version: git
+summary: bmcmanager
+description: BMCManager tool
+base: core18
+confinement: strict
+grade: stable
+license: GPL-3.0
+
+parts:
+  bmcmanager:
+    plugin: python
+    python-version: python3
+    source: .
+    build-environment:
+      - BMCMANAGER_IGNORE_MISSING_BINARIES: '1'
+    stage-packages:
+      - freeipmi
+      - ipmitool
+
+apps:
+  bmcmanager:
+    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcm
+    plugs: [home, network]
+  ipmitool:
+    command: usr/bin/ipmitool
+    plugs: [network]
+  ipmi-sensors:
+    command: usr/sbin/ipmi-sensors
+    plugs: [network]
+  ipmi-sel:
+    command: usr/sbin/ipmi-sel
+    plugs: [network]
+  ipmi-dcmi:
+    command: usr/sbin/ipmi-dcmi
+    plugs: [network]

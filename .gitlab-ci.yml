@@ -1,0 +1,30 @@
+Test:
+  stage: test
+  image: python:3.6-slim-buster
+  script:
+    - pip install tox
+    - tox
+  only:
+    - master
+    - merge_requests
+
+Development Image:
+  stage: deploy
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - export DEVELOPMENT=yes
+    - sh $CI_PROJECT_DIR/scripts/release.sh
+  only:
+    - master
+
+Release Image:
+  stage: deploy
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - sh $CI_PROJECT_DIR/scripts/release.sh
+  only:
+    - tags

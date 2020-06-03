@@ -1,0 +1,7 @@
+.eggs
+.tox
+*.pyc
+*.swp
+bmcmanager.egg-info/*
+build/*
+dist/*
