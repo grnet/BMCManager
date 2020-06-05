@@ -64,6 +64,12 @@ nfs_share = "IP:/path/"
 http_share = "http://IP/path/"
 credentials = <dcim_secret_name_for_credentials>
 
+; Latest firmware versions to check against
+bios = <MAJOR.MINOR.PATCH>
+tsm = <MAJOR.MINOR.PATCH>
+psu_<model> = <MAJOR.MINOR.PATCH>
+expected_psus = 2
+
 [<OOB2>]
 username = <oob2_username>
 password = <oob2_password>
