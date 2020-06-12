@@ -491,7 +491,7 @@ class Lenovo(OobBase):
             handle = handle or args.handle
             logging.info('Choose component update')
             r = self._get_rpc('setupdatecomp', params={
-                'UPDATE_FLAG': 1,
+                'UPDATE_FLAG': to_update['DEV_TYPE'],
                 'UPDATE_CNT': 1,
                 'FW_DEVICE_TYPE': to_update['DEV_TYPE'],
                 'SLOT_NO': to_update['SLOT_NO'],
