@@ -398,6 +398,7 @@ class Lenovo(OobBase):
 
         parser = argparse.ArgumentParser('firmware-upgrade rpc')
         parser.add_argument('--timeout', type=int, default=60)
+        parser.add_argument('--reboot', action='store_true', default=False)
         parser.add_argument('--handle', type=int, default=None)
         parser.add_argument(
             '--stages', nargs='+', default=all_stages, type=int_in(all_stages))
@@ -502,6 +503,9 @@ class Lenovo(OobBase):
                 logging.info('Choose component update: OK')
 
         logging.info('Firmware upgrade process started')
+
+        if args.reboot:
+            self.power_reset()
 
         if 9 in args.stages:
             begin = datetime.utcnow()
