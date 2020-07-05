@@ -16,9 +16,9 @@
 from collections import defaultdict
 from datetime import datetime
 import json
-import logging
 import urllib
 
+from bmcmanager.logs import log
 from bmcmanager.firmwares.base import LatestFirmwareFetcher
 
 
@@ -49,14 +49,14 @@ class LenovoBase(LatestFirmwareFetcher):
     def get(self):
         url = LENOVO_URL.format(self.model_name, self.device_name)
         try:
-            logging.debug('GET {}'.format(url))
+            log.debug('GET {}'.format(url))
             response = json.loads(urllib.request.urlopen(url).read())
             items = response['body']['DownloadItems']
         except (json.JSONDecodeError, urllib.error.URLError) as e:
-            logging.error('Could not fetch URL: {}'.format(e))
+            log.error('Could not fetch URL: {}'.format(e))
             return {}, []
         except KeyError as e:
-            logging.error('Invalid data format: {}'.format(e))
+            log.error('Invalid data format: {}'.format(e))
             return {}, []
 
         tracked_firmware = {**TRACKED_FIRMWARE, **self.extra_firmware}
@@ -83,10 +83,10 @@ class LenovoBase(LatestFirmwareFetcher):
                 })
 
             except ValueError as e:
-                logging.error('Invalid data format: {}'.format(e))
+                log.error('Invalid data format: {}'.format(e))
 
             except KeyError as e:
-                logging.error('Missing information: {}'.format(e))
+                log.error('Missing information: {}'.format(e))
 
         return result, downloads
 

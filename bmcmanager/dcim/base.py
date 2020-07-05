@@ -15,17 +15,18 @@
 
 
 class DcimBase(object):
-    # All dcims inherit this class
-    # Defines the interface for dcims
-    # and implements basic functionality
-    def __init__(self, identifier, is_rack, is_rack_unit, is_serial,
-                 dcim_params):
-        self.identifier = identifier
-        self.dcim_params = dcim_params
-        self.api_url = self.dcim_params['api_url']
-        self.is_rack = is_rack
-        self.is_rack_unit = is_rack_unit
-        self.is_serial = is_serial
+    """
+    Base DCIM class
+    """
+    def __init__(self, args, config):
+        self.args = args
+        self.config = config
+        self.identifier = args.server
+        self.dcim_params = config
+        self.api_url = config['api_url']
+        self.is_rack = self.args.type == 'rack'
+        self.is_rack_unit = self.args.type == 'rack-unit'
+        self.is_serial = self.args.type == 'serial'
 
     def get_info(self):
         raise NotImplementedError('get_info not implemented')

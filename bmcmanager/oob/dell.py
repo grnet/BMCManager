@@ -18,10 +18,11 @@ import re
 import sys
 import time
 import paramiko
-import logging
 
 from subprocess import Popen
+
 from bmcmanager.oob.base import OobBase
+from bmcmanager.logs import log
 
 
 class Dell(OobBase):
@@ -82,7 +83,7 @@ class Dell(OobBase):
         jobqueue_view = 'racadm jobqueue view -i {}'
         output = self._ssh('racadm techsupreport collect')
         jid = self._find_jid(output)
-        logging.info('Sleeping for 3 minutes to collect the TSR report')
+        log.info('Sleeping for 3 minutes to collect the TSR report')
         time.sleep(180)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)

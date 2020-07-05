@@ -16,7 +16,6 @@
 
 import argparse
 import json
-import logging
 import os
 import re
 from subprocess import Popen, check_output, CalledProcessError, call
@@ -30,6 +29,7 @@ from bmcmanager.interactive import posix_shell
 from bmcmanager.utils import firmware
 from bmcmanager import nagios
 from bmcmanager.firmwares import firmware_fetchers
+from bmcmanager.logs import log
 
 if sys.platform == 'darwin':
     BROWSER_OPEN = 'open'
@@ -45,32 +45,27 @@ SSR_ID, SSR_NAME, SSR_TYPE, SSR_STATE, SSR_VALUE, SSR_UNIT, _, SSR_CRITL, \
 
 
 class OobBase(object):
+    """
+    Base OOB class
+    """
     URL_LOGIN = '/rpc/WEBSES/create.asp'
     URL_VNC = '/Java/jviewer.jnlp?EXTRNIP={}&JNLPSTR=JViewer'
 
-    # All oobs inherit this class
-    # Defines the interface for oobs
-    # and implements basic functionality.
-    def __init__(self, command, oob_info, command_args, username=None,
-                 password=None, wait=False, force=False, http_share=None,
-                 nfs_share=None, oob_params=None, dcim=None):
-        self.command = command
+    def __init__(self, parsed_args, dcim, oob_config, oob_info):
+        self.args = parsed_args
         self.oob_info = oob_info
-        self.command_args = command_args
-        self.username = username
-        self.password = password
-        self.wait = wait
-        self.force = force
-        self.nfs_share = nfs_share
-        self.http_share = http_share
-        self.oob_params = oob_params
         self.dcim = dcim
+        self.oob_config = oob_config
+        self.username = self.oob_config['username']
+        self.password = self.oob_config['password']
+        self.nfs_share = self.oob_config['nfs_share']
+        self.http_share = self.oob_config['http_share']
 
     def _print(self, msg):
         sys.stdout.write('{}:\n{}\n'.format(self.oob_info['identifier'], msg))
 
     def info(self):
-        logging.info('Executing info')
+        log.debug('Executing info')
         info = self.oob_info['info']
 
         info_str = ''
@@ -80,7 +75,7 @@ class OobBase(object):
         self._print(info_str[:-1])
 
     def _execute_popen(self, command):
-        logging.info('Executing {}'.format(' '.join(command)))
+        log.debug('Executing {}'.format(' '.join(command)))
         try:
             Popen(command)
         except:
@@ -94,7 +89,7 @@ class OobBase(object):
         status_command = ['chassis', 'power', 'status']
         if self.wait:
             if 'off' in self._execute(status_command, output=True):
-                logging.info('Waiting for machine to turn on...')
+                log.info('Waiting for machine to turn on...')
 
             while (1):
                 if 'off' not in self._execute(status_command, output=True):
@@ -113,7 +108,7 @@ class OobBase(object):
     # command is an array
     def _execute(self, command, output=False):
         if not self.oob_info['ipmi']:
-            logging.warn('No IPMI field for {}'.format(self.oob_info['oob']))
+            log.warn('No IPMI field for {}'.format(self.oob_info['oob']))
             return ''
 
         prefix = self._get_ipmi_tool_prefix()
@@ -123,7 +118,7 @@ class OobBase(object):
 
     # command is an array
     def _execute_cmd(self, command, output=False):
-        logging.info('Executing {}'.format(' '.join(command)))
+        log.debug('Executing {}'.format(' '.join(command)))
         try:
             if output:
                 return check_output(command).decode('utf-8')
@@ -458,7 +453,7 @@ class OobBase(object):
     def check_firmware(self):
         pre = '{} Firmware versions'.format(self.oob_info['identifier'])
         state, msg = firmware.check_firmware(
-            self.oob_info['custom_fields'], self.oob_params)
+            self.oob_info['custom_fields'], self.oob_config)
 
         nagios.result(state, msg, pre=pre)
 
@@ -519,7 +514,7 @@ class OobBase(object):
 
             if username == self.username:
                 found = True
-                logging.debug('ID of user {} is {}'.format(username, uid))
+                log.debug('ID of user {} is {}'.format(username, uid))
                 break
 
         if not found:
@@ -534,8 +529,8 @@ class OobBase(object):
             r = self.dcim.set_secret(args.secret_role, self.oob_info['info'],
                                      username, args.new_password)
             if r.status_code >= 300:
-                logging.critical('Setting NetBox secret failed')
-                logging.critical('Error {}:\n{}'.format(r.status_code, r.text))
+                log.critical('Setting NetBox secret failed')
+                log.critical('Error {}:\n{}'.format(r.status_code, r.text))
             else:
                 self._print('Successfully updated secret')
 
@@ -553,10 +548,10 @@ class OobBase(object):
             fetcher = firmware_fetchers[self.oob_info['info']['device_type']]
 
         except KeyError as e:
-            logging.error('Unsupported device type: {}'.format(e))
+            log.error('Unsupported device type: {}'.format(e))
             sys.exit(-1)
 
-        firmwares, downloads = fetcher(self.oob_params).get()
+        firmwares, downloads = fetcher(self.oob_config).get()
 
         if args.download_to is None:
             print(json.dumps(firmwares, indent=2))
@@ -565,21 +560,21 @@ class OobBase(object):
         try:
             os.makedirs(args.download_to, exist_ok=True)
         except OSError as e:
-            logging.error('Could not create download directory: {}'.format(e))
+            log.error('Could not create download directory: {}'.format(e))
             sys.exit(-1)
 
         for url in downloads:
             name = url[url.rfind('/') + 1:]
             file_name = os.path.join(args.download_to, name)
-            logging.info('Downloading {} to {}'.format(url, file_name))
+            log.info('Downloading {} to {}'.format(url, file_name))
             try:
                 with open(file_name, 'wb') as fout:
                     fout.write(urllib.request.urlopen(url).read())
             except (urllib.error.URLError, OSError) as e:
-                logging.error('Failed: {}'.format(e))
+                log.error('Failed: {}'.format(e))
 
             if args.innoextract and name.endswith('.exe'):
-                logging.info('Extracting with innoextract')
+                log.info('Extracting with innoextract')
                 self._execute_cmd([
                     'innoextract', file_name, '-d', args.download_to])
 
@@ -613,14 +608,14 @@ class OobBase(object):
         }.get(args.type)
 
         if regex is None:
-            logging.error('Unknown IPMI address type: {}'.format(args.type))
+            log.error('Unknown IPMI address type: {}'.format(args.type))
             return ''
 
         stdout = self._execute(['lan', 'print'], output=True)
 
         m = next(re.finditer(regex, stdout, re.MULTILINE), None)
         if m is None:
-            logging.error('No IPMI address found')
+            log.error('No IPMI address found')
             return
 
         addr = m.group('addr')
@@ -636,9 +631,9 @@ class OobBase(object):
     def refresh_ipmi_address(self):
         addr = self._get_ipmi_address(self.command_args)
         custom_fields = {'IPMI': addr}
-        logging.info('Patching custom fields: {}'.format(custom_fields))
+        log.info('Patching custom fields: {}'.format(custom_fields))
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
-            logging.error('Failed to refresh IPMI')
+            log.error('Failed to refresh IPMI')
 
     def get_ipmi_address(self):
         addr = self._get_ipmi_address(self.command_args)

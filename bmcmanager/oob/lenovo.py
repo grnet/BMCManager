@@ -17,7 +17,6 @@
 import argparse
 from datetime import datetime, timedelta
 import json
-import logging
 import re
 from subprocess import Popen
 import sys
@@ -29,6 +28,7 @@ import paramiko
 import requests
 
 from bmcmanager.oob.base import OobBase
+from bmcmanager.logs import log
 from bmcmanager import nagios
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -94,10 +94,10 @@ class Lenovo(OobBase):
 
         except (SyntaxError, TypeError, ValueError):
             if 'session_expired.html' in text:
-                logging.critical('Failed due to expired session')
+                log.critical('Failed due to expired session')
             else:
-                logging.critical('Could not parse response text')
-                logging.debug('Response was:\n{}'.format(text))
+                log.critical('Could not parse response text')
+                log.debug('Response was:\n{}'.format(text))
 
             return []
 
@@ -221,7 +221,7 @@ class Lenovo(OobBase):
         response = self._post(url, params, self.session_token, self.CSRF_token)
 
         if response.status_code != 200:
-            logging.critical('Cannot retrieve {}, error {}'.format(
+            log.critical('Cannot retrieve {}, error {}'.format(
                 item, response.status_code))
             return []
 
@@ -346,9 +346,9 @@ class Lenovo(OobBase):
 
         custom_fields['PSU'] = ', '.join(sorted(psus))
 
-        logging.info('Patching custom fields: {}'.format(custom_fields))
+        log.info('Patching custom fields: {}'.format(custom_fields))
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
-            logging.error('Failed to refresh DCIM firmware versions')
+            log.error('Failed to refresh DCIM firmware versions')
 
     def _matching(self, d1, d2):
         return d1['DEV_IDENTIFIER'] == d2['DEV_IDENTIFIER']
@@ -409,33 +409,33 @@ class Lenovo(OobBase):
         handle = None
 
         if 1 in args.stages:
-            logging.info('Enter FW update mode')
+            log.info('Enter FW update mode')
             r = self._get_rpc('getenterfwupdatemode', params={'FWUPMODE': 1})
-            logging.debug(r)
+            log.debug(r)
             if r and 'HANDLE' in r[0]:
                 handle = r[0]['HANDLE']
-                logging.info('Enter FW update mode: OK')
+                log.info('Enter FW update mode: OK')
             else:
-                logging.fatal('Cannot enter FW update mode')
+                log.fatal('Cannot enter FW update mode')
                 sys.exit(-1)
 
-        logging.info('Update session handle: {}'.format(handle))
+        log.info('Update session handle: {}'.format(handle))
 
         if 2 in args.stages:
             handle = handle or args.handle
-            logging.info('Rearm firmware update timer')
+            log.info('Rearm firmware update timer')
             r = self._get_rpc('rearmfwupdatetimer', params={'SESSION_ID': handle})
-            logging.debug(r)
+            log.debug(r)
 
             if r[0]['NEWSESSIONID'] == handle:
-                logging.info('Rearm firmware update timer: OK')
+                log.info('Rearm firmware update timer: OK')
 
         if 3 in args.stages:
             handle = handle or args.handle
             if not hasattr(self, 'CSRF_token'):
                 self._connect()
 
-            logging.info('Uploading firmware bundle')
+            log.info('Uploading firmware bundle')
 
             ipmi = self.oob_info['ipmi']
             url = ipmi + '/file_upload_firmware.html'
@@ -448,48 +448,48 @@ class Lenovo(OobBase):
                     'bundle?FWUPSessionid={}'.format(handle): args.bundle
                 })
 
-            logging.debug(r.status_code)
+            log.debug(r.status_code)
             if r.status_code == 200:
-                logging.info('Uploading firmware bundle: OK')
+                log.info('Uploading firmware bundle: OK')
 
         if 4 in args.stages:
-            logging.info('Get Bundle Upload Status')
+            log.info('Get Bundle Upload Status')
             r = self._get_rpc('getbundleupldstatus')
-            logging.debug(r)
+            log.debug(r)
 
             if r == []:
-                logging.info('Get Bundle Upload Status: OK')
+                log.info('Get Bundle Upload Status: OK')
 
         if 5 in args.stages:
-            logging.info('Validate Bundle')
+            log.info('Validate Bundle')
             r = self._get_rpc('validatebundle', params={'BUNDLENAME': 'bundle_bkp.bdl'})
-            logging.debug(r)
+            log.debug(r)
             if r[0]['STATUS'] == 0:
-                logging.info('Validate Bundle: OK')
+                log.info('Validate Bundle: OK')
 
         if 6 in args.stages:
-            logging.info('Replace Bundle')
+            log.info('Replace Bundle')
             r = self._get_rpc('replacebundlebkp')
-            logging.debug(r)
+            log.debug(r)
             if r[0]['STATUS'] == 0:
-                logging.info('Replace Bundle: OK')
+                log.info('Replace Bundle: OK')
 
         if 7 in args.stages:
-            logging.info('Checking for new firmware')
+            log.info('Checking for new firmware')
             r = self._get_rpc('getimageinfo')
-            logging.debug(r)
+            log.debug(r)
 
             to_update = next((
                 x for x in r if x['NEWIMG_VER'] > x['CURIMG_VER']), None)
             if to_update is None:
-                logging.info('No updates available')
+                log.info('No updates available')
                 return
             else:
-                logging.info('Available update: {}'.format(to_update))
+                log.info('Available update: {}'.format(to_update))
 
         if 8 in args.stages and to_update:
             handle = handle or args.handle
-            logging.info('Choose component update')
+            log.info('Choose component update')
             r = self._get_rpc('setupdatecomp', params={
                 'UPDATE_FLAG': to_update['DEV_TYPE'],
                 'UPDATE_CNT': 1,
@@ -498,11 +498,11 @@ class Lenovo(OobBase):
                 'DEV_IDENTIFIER': to_update['DEV_IDENTIFIER'],
                 'SESSION_ID': handle,
             })
-            logging.debug(r)
+            log.debug(r)
             if r == []:
-                logging.info('Choose component update: OK')
+                log.info('Choose component update: OK')
 
-        logging.info('Firmware upgrade process started')
+        log.info('Firmware upgrade process started')
 
         if args.reboot:
             self.power_reset()
@@ -512,34 +512,34 @@ class Lenovo(OobBase):
             while datetime.utcnow() < begin + timedelta(minutes=args.timeout):
                 try:
                     r = self._get_rpc('getcompupdatestatus')
-                    logging.debug(r)
+                    log.debug(r)
                     dev = next((
                         x for x in r if self._matching(x, to_update)), None)
-                    logging.debug(dev)
+                    log.debug(dev)
                     progress = (dev or {}).get('UPDATE_PERCENTAGE')
                     if progress is None:
-                        logging.info('Update in progress')
+                        log.info('Update in progress')
                     else:
-                        logging.info('Update progress: {}%'.format(progress))
+                        log.info('Update progress: {}%'.format(progress))
                         if progress == 100:
-                            logging.info('Update complete!')
+                            log.info('Update complete!')
                             break
                 except (ConnectionResetError, BrokenPipeError):
-                    logging.info('Update in progress')
+                    log.info('Update in progress')
 
                 time.sleep(10)
 
         if 10 in args.stages:
             handle = handle or args.handle
-            logging.info('Exit FW update mode')
+            log.info('Exit FW update mode')
             r = self._get_rpc('getexitfwupdatemode', params={
                 'MODE': 0, 'RNDNO': handle
             })
-            logging.debug(r)
+            log.debug(r)
             if r == []:
-                logging.info('Exit FW update mode: OK')
+                log.info('Exit FW update mode: OK')
 
-        logging.info('Done!')
+        log.info('Done!')
 
     def lenovo_rpc(self):
         def json_params(arg):

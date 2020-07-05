@@ -14,30 +14,28 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import logging
 import sys
 import os
 
 import requests
 
+from bmcmanager.logs import log
 from bmcmanager.dcim.base import DcimBase, DcimError
 
 
 class Netbox(DcimBase):
-    def __init__(self, identifier, is_rack, is_rack_unit, is_serial,
-                 dcim_params):
-        super(Netbox, self).__init__(
-            identifier, is_rack, is_rack_unit, is_serial, dcim_params)
+    def __init__(self, args, config):
+        super(Netbox, self).__init__(args, config)
 
         self.device_type_ids = None
-        raw_ids = dcim_params.get('device_type_id')
+        raw_ids = self.dcim_params.get('device_type_id')
         if raw_ids is not None:
             try:
                 # '1, 3,2' --> [1, 2, 3]
                 self.device_type_ids = list(
                     map(int, map(str.strip, raw_ids.split(','))))
             except (TypeError, ValueError):
-                logging.warning('Ignoring invalid device type ids: {}'.format(
+                log.warning('Ignoring invalid device type ids: {}'.format(
                     raw_ids))
 
         self.info = self._retrieve_info()
@@ -56,13 +54,13 @@ class Netbox(DcimBase):
         return params
 
     def _get_rack_id(self):
-        logging.info('Querying the Netbox API for rack {}'.format(
+        log.debug('Querying the Netbox API for rack {}'.format(
             self.identifier))
         url = os.path.join(self.api_url, 'api/dcim/racks/')
         params = {'name': self.identifier}
         json_response = self._do_request(url, params)
 
-        logging.info('Decoding the response')
+        log.debug('Decoding the response')
         # we expect the response to be a json object
         response = json_response.json()
         if len(response['results']) != 1:
@@ -87,7 +85,7 @@ class Netbox(DcimBase):
     def _do_request(self, url, params, with_session_key=False, method='get'):
         headers = self._get_headers(with_session_key)
 
-        logging.debug('HTTP {} {}, {}, {}'.format(
+        log.debug('HTTP {} {}, {}, {}'.format(
             method.upper(), url, str(params), str(headers)))
         try:
             f = getattr(requests, method)
@@ -100,12 +98,11 @@ class Netbox(DcimBase):
             exit(1)
 
     def _retrieve_info(self):
-        logging.info('Querying the Netbox API for {}'.format(self.identifier))
+        log.debug('Querying the Netbox API for {}'.format(self.identifier))
         url = os.path.join(self.api_url, 'api/dcim/devices/')
         params = self._get_params()
         json_response = self._do_request(url, params)
-
-        logging.info('Decoding the response')
+        log.debug('Decoding the response')
         # we expect the response to be a json object
         return json_response.json()
 
@@ -138,8 +135,8 @@ class Netbox(DcimBase):
             }
 
     def get_secret(self, role, oob_info):
-        device = oob_info['name']
-        logging.info('Querying secret {} of device {}'.format(role, device))
+        device = oob_info['info']['name']
+        log.debug('Querying secret {} of device {}'.format(role, device))
         response = self._do_request(
             url=os.path.join(self.api_url, 'api/secrets/secrets/'),
             params={'role': role, 'device': device.upper()},
@@ -149,7 +146,7 @@ class Netbox(DcimBase):
             return response.json()['results'][0]
 
         except (TypeError, KeyError, IndexError):
-            logging.warning('Did not find secret {} for device {}'.format(
+            log.warning('Did not find secret {} for device {}'.format(
                 role, device))
             return {
                 'name': None,
@@ -157,7 +154,7 @@ class Netbox(DcimBase):
             }
 
     def _get_secret_role_id(self, role_name):
-        logging.debug('Searching for id of secret role {}'.format(role_name))
+        log.debug('Searching for id of secret role {}'.format(role_name))
         response = self._do_request(
             url=os.path.join(self.api_url, 'api/secrets/secret-roles/'),
             params={'slug': role_name}
@@ -169,12 +166,12 @@ class Netbox(DcimBase):
             return None
 
     def set_secret(self, role_name, oob_info, secret_name, secret_text):
-        logging.info('Will upsert secret {} for device {}'.format(
+        log.debug('Will upsert secret {} for device {}'.format(
             role_name, oob_info['name']))
 
         role_id = self._get_secret_role_id(role_name)
         if role_id is None:
-            logging.critical('unknown role slug {}'.format(role_name))
+            log.critical('unknown role slug {}'.format(role_name))
 
         url = os.path.join(self.api_url, 'api/secrets/secrets/')
         f = requests.post
@@ -182,7 +179,7 @@ class Netbox(DcimBase):
         existing_secrets = self.get_secrets(oob_info)
         for s in existing_secrets:
             if s['role'] == role_name and s['name'] == secret_name:
-                logging.info('Updating secret with role {} and name {}'.format(
+                log.debug('Updating secret with role {} and name {}'.format(
                     role_name, secret_name))
                 url = os.path.join(url, '{}/'.format(s['id']))
                 f = requests.patch
@@ -200,7 +197,7 @@ class Netbox(DcimBase):
         )
 
     def _get_secrets(self, oob_info):
-        logging.info('Searching for secrets of device {}'.format(
+        log.debug('Searching for secrets of device {}'.format(
             oob_info['name']))
 
         response = self._do_request(
