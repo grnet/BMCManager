@@ -12,11 +12,13 @@ All notable changes to this project are documented in this file.
 - An error is printed when no servers are matched.
 - Command for opening NetBox page (`bmcmanager open dcim`).
 - Command for calling ipmitool (`bmcmanager ipmi ipmitool`).
+- Print possible commands when an invalid command is used.
 
 ### Changed
 
 - Using [cliff](https://docs.openstack.org/cliff/latest/index.html).
 - All commands are now grouped under namespaces, see `bmcmanager --help`.
+- Numerous speed improvements by avoiding useless queries to the DCIM.
 
 ### Fixed
 
