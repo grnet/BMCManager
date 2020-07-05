@@ -13,6 +13,8 @@ All notable changes to this project are documented in this file.
 - Command for opening NetBox page (`bmcmanager open dcim`).
 - Command for calling ipmitool (`bmcmanager ipmi ipmitool`).
 - Print possible commands when an invalid command is used.
+- Documentation examples.
+- Documentation for extending `bmcmanager` with new features.
 
 ### Changed
 
