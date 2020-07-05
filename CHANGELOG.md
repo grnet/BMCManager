@@ -2,7 +2,29 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
+## Unreleased
+
+### Added
+
+- Bash auto completion.
+- Get and list commands now support multiple output formats.
+- Interactive mode.
+- An error is printed when no servers are matched.
+- Command for opening NetBox page (`bmcmanager open dcim`).
+- Command for calling ipmitool (`bmcmanager ipmitool`).
+
+### Changed
+
+- Using [cliff](https://docs.openstack.org/cliff/latest/index.html).
+- All commands are now grouped under namespaces, see `bmcmanager --help`.
+
+### Fixed
+
+- Improved log message levels so that no sensitive data is printed unless debugging.
+- Command-line arguments handling.
+
+
+## [v0.2] (2020-07-05)
 
 Initial version as `bmcmanager`.
 
