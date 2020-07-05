@@ -11,7 +11,7 @@ All notable changes to this project are documented in this file.
 - Interactive mode.
 - An error is printed when no servers are matched.
 - Command for opening NetBox page (`bmcmanager open dcim`).
-- Command for calling ipmitool (`bmcmanager ipmitool`).
+- Command for calling ipmitool (`bmcmanager ipmi ipmitool`).
 
 ### Changed
 
