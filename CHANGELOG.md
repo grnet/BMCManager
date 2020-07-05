@@ -19,6 +19,8 @@ All notable changes to this project are documented in this file.
 - Using [cliff](https://docs.openstack.org/cliff/latest/index.html).
 - All commands are now grouped under namespaces, see `bmcmanager --help`.
 - Numerous speed improvements by avoiding useless queries to the DCIM.
+- Updated documentation, added complete configuration example.
+- Config file is now set using the `--config-file` flag.
 
 ### Fixed
 

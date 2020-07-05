@@ -59,7 +59,7 @@ def base_arguments(parser):
     Base bmcmanager arguments
     """
     parser.add_argument(
-        '--config',
+        '--config-file',
         help='Configuration file path',
         default=''
     )

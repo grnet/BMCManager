@@ -78,7 +78,7 @@ Docker Limitations:
 
 ## Configuration
 
-`bmcmanager` uses a single configuration file. It looks in `~/.config/bmcmanager` and `$XDG_CONFIG_HOME/bmcmanager` by default, but a different configuration file can be chosen by setting the `--config` command line argument.
+`bmcmanager` uses a single configuration file. It looks in `~/.config/bmcmanager` and `$XDG_CONFIG_HOME/bmcmanager` by default, but a different configuration file can be chosen by setting the `--config-file` command line argument.
 
 The configuration file should have this form:
 
@@ -130,9 +130,14 @@ Some configuration can be overriden using environment variables:
 
 ## Examples
 
-- Clear the system event log for server with name `lar0510`:
+- Retrieve the system event log for server `lar0510`:
   ```bash
   $ bmcmanager ipmi logs get lar0510
+  $ bmcmanager ipmi logs get lar0510 --analysed    # Decode OEM fields
+  ```
+
+- Clear the system event log for server `lar0510`:
+  ```bash
   $ bmcmanager ipmi logs clear lar0510
   ```
 
@@ -189,11 +194,11 @@ Some configuration can be overriden using environment variables:
 
 Use `bmcmanager --help` for a list of available commands. Common command-line arguments for all supported commands are:
 
-| Parameter | Type | Description |
-| - | - | - |
-| `--config FILE` | String | Read configuration from `FILE` |
-| `--log-file FILE` | String | Write detailed logs to `FILE` |
-| `--verbose` | Flag | Print verbose details. **NOTE**: This may include sensitive information, like passwords |
+| Parameter            | Type   | Description                                                                             |
+| -------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `--config-file FILE` | String | Read configuration from `FILE`                                                          |
+| `--log-file FILE`    | String | Write detailed logs to `FILE`                                                           |
+| `--verbose`          | Flag   | Print verbose details. **NOTE**: This may include sensitive information, like passwords |
 
 Most `bmcmanager` commands have the following format:
 ```bash
@@ -204,11 +209,11 @@ $ bmcmanager <command-name> <server-name>
 
 The server selection arguments are:
 
-| Parameter | Type | Default | Description |
-| - | - | - |
-| `<server-name>` | String | - | Search NetBox for `<server-name>` and execute command on all matching devices |
-| `-d/--dcim DCIM` | String | `netbox` | Use a different `DCIM`. Requires a separate `[DCIM]` section on the configuration file |
-| `-t/--type TYPE` | `name`/`rack`/`rack-unit`/`serial` | `name` | Specifically match a rack, a rack unit, a serial number, or search by name |
+| Parameter        | Type                               | Default  | Description                                                                            |
+| ---------------- | ---------------------------------- | -------- |
+| `<server-name>`  | String                             | -        | Search NetBox for `<server-name>` and execute command on all matching devices          |
+| `-d/--dcim DCIM` | String                             | `netbox` | Use a different `DCIM`. Requires a separate `[DCIM]` section on the configuration file |
+| `-t/--type TYPE` | `name`/`rack`/`rack-unit`/`serial` | `name`   | Specifically match a rack, a rack unit, a serial number, or search by name             |
 
 Also use the `--help` flag to get more information for a particular command, e.g.:
 
