@@ -127,7 +127,7 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
 
 def bmcmanager_take_action(cmd, parsed_args):
     cmd.parsed_args = parsed_args
-    cmd.config = get_config(parsed_args.config)
+    cmd.config = get_config(parsed_args.config_file)
     dcim = get_dcim(parsed_args, cmd.config)
 
     for oob_info in dcim.get_oobs():
