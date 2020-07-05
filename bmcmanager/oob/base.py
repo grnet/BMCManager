@@ -52,7 +52,7 @@ class OobBase(object):
     URL_VNC = '/Java/jviewer.jnlp?EXTRNIP={}&JNLPSTR=JViewer'
 
     def __init__(self, parsed_args, dcim, oob_config, oob_info):
-        self.args = parsed_args
+        self.parsed_args = parsed_args
         self.oob_info = oob_info
         self.dcim = dcim
         self.oob_config = oob_config
@@ -87,7 +87,7 @@ class OobBase(object):
 
     def ssh(self):
         status_command = ['chassis', 'power', 'status']
-        if self.wait:
+        if self.parsed_args.wait:
             if 'off' in self._execute(status_command, output=True):
                 log.info('Waiting for machine to turn on...')
 
@@ -162,12 +162,12 @@ class OobBase(object):
 
     def power_off(self):
         cmd = ['chassis', 'power']
-        if self.force:
+        if self.parsed_args.force:
             cmd.append('off')
         else:
             cmd.append('soft')
         self._execute(cmd)
-        if self.wait:
+        if self.parsed_args.wait:
             while 1:
                 stdout = self._execute(
                     ['chassis', 'power', 'status'], output=True)
@@ -188,7 +188,7 @@ class OobBase(object):
 
     def ipmi_reset(self):
         cmd = ['mc', 'reset']
-        if self.force:
+        if self.parsed_args.force:
             cmd.append('cold')
         else:
             cmd.append('warm')
@@ -403,27 +403,10 @@ class OobBase(object):
         nagios.result(status, msg or 'SEL, Sensors OK', lines, perfdata, pre)
 
     def creds(self):
-        parser = argparse.ArgumentParser('bmcmanager creds')
-        parser.add_argument(
-            '--ipmi-field',
-            choices=['username', 'password', 'hostname', 'all'],
-            default='all')
-
-        args = parser.parse_args(self.command_args)
-
         ipmi = (self.oob_info['ipmi'] or '').replace('https://', '')
-        if args.ipmi_field == 'hostname':
-            print(ipmi)
-        elif args.ipmi_field == 'username':
-            print(self.username)
-        elif args.ipmi_field == 'password':
-            print(self.password)
-        else:
-            self._print('\n'.join([
-                'IPMI:{}'.format(ipmi),
-                'USERNAME:{}'.format(self.username),
-                'PASSWORD:{}'.format(self.password),
-            ]))
+        columns = ('address', 'username', 'password')
+        values = (ipmi, self.username, self.password)
+        return columns, values
 
     def ipmi_ssh(self):
         port = 22
@@ -431,12 +414,13 @@ class OobBase(object):
         username = self.username
         password = self.password
 
-        if self.command_args:
+        if self.parsed_args.command:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect(hostname=hostname, port=port,
                            username=username, password=password)
-            _, out, err = client.exec_command(' '.join(self.command_args))
+            _, out, err = client.exec_command(
+                ' '.join(self.parsed_args.command))
             print(out.read().decode())
             if err:
                 print(err.read().decode(), file=sys.stderr)
@@ -586,7 +570,6 @@ class OobBase(object):
 
     def clear_firmware_upgrade_logs(self):
         host = self.oob_info['ipmi'].replace('https://', '')
-
         sel_errors = self._get_sel_errors(host)
         if all(self._sel_is_firmware_upgrade(err) for err in sel_errors):
             self.clear_ipmi_logs()

@@ -134,9 +134,6 @@ class Lenovo(OobBase):
         )
 
     def console(self):
-        parser = argparse.ArgumentParser('console')
-        parser.add_argument('--print-cmd', action='store_true')
-        args = parser.parse_args(self.command_args)
 
         self._connect()
 
@@ -156,7 +153,7 @@ class Lenovo(OobBase):
 
         cmd = ['/usr/bin/javaws', myjviewer]
         try:
-            if args.print_cmd:
+            if self.parsed_args.print_cmd:
                 print(' '.join(cmd))
             else:
                 Popen(cmd)
@@ -242,10 +239,21 @@ class Lenovo(OobBase):
 
     def get_disks(self):
         disks = self._get_disks()
-        if not disks:
-            self._print('Could not retrieve disks')
+        columns = ['index', 'ctrl', 'slot', 'size_gb', 'type', 'state',
+                   'interface', 'speed', 'vendor']
+        values = [[
+            disk['DRIVE_INDEX'],
+            disk['CONTROLLER_INDEX'],
+            disk['SLOT_NUMBER'],
+            disk['SIZE'] // 1024,
+            DISK_TYPE.get(disk['MEDIA_TYPE'], 'N/A'),
+            DISK_STATE.get(disk['DEVICE_STATE'], 'unknown'),
+            DISK_INTERFACE.get(disk['INTF_TYPE'], 'unknown'),
+            DISK_SPEED.get(disk['LINK_SPEED'], 'unknown'),
+            disk['VENDOR_ID'],
+        ] for disk in disks]
 
-        self._print('\n'.join(map(self._format_disk, disks)))
+        return columns, values
 
     def ipmi_logs_analysed(self):
         sel = self._get_sel()
@@ -270,10 +278,7 @@ class Lenovo(OobBase):
 
     def check_disks(self):
         pre = '{} disks'.format(self.oob_info['identifier'])
-        try:
-            expected = int(self.command_args[0])
-        except (TypeError, IndexError):
-            expected = None
+        expected = self.parsed_args.expected
 
         disks = self._get_disks()
         disks_ok, disks_crit = [], []

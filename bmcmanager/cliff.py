@@ -13,13 +13,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+import sys
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+from cliff.app import App
+from cliff.commandmanager import CommandManager
+
+
+class BMCManagerApp(App):
+    def __init__(self):
+        super(BMCManagerApp, self).__init__(
+            description='BMCManager',
+            version='0.2',
+            command_manager=CommandManager('bmcmanager.entrypoints'),
+            deferred_help=True
+        )
+
+
+def main(argv=sys.argv[1:]):
+    m = BMCManagerApp()
+    return m.run(argv)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
