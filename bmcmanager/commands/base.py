@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import argparse
+import json
 import os
 import sys
 
@@ -26,6 +28,30 @@ from bmcmanager.oob import OOBS
 from bmcmanager.errors import BMCManagerError
 from bmcmanager.logs import log
 from bmcmanager import exitcode
+
+
+def int_in_range_argument(itt):
+    """
+    argparse integer in range
+    """
+    def argparse_type(value):
+        ivalue = int(value)
+        if ivalue not in itt:
+            msg = '{} out of valid range [{}..{}]'.format(value, min(itt), max(itt))
+            raise argparse.ArgumentTypeError(msg)
+        return ivalue
+
+    return argparse_type
+
+
+def json_argument(arg):
+    """
+    argparse json argument type
+    """
+    try:
+        return json.loads(arg)
+    except json.JSONDecodeError as e:
+        raise argparse.ArgumentTypeError('invalid JSON') from e
 
 
 def base_arguments(parser):
@@ -68,38 +94,65 @@ def get_dcim(args, config):
     return DCIMS[args.dcim](args, config[args.dcim])
 
 
-def get_oob_config(config, dcim, oob_info):
+def get_oob_config(config, dcim, oob_info, get_secret=True):
     """
     Get configuration for an OOB
     """
     oob_name = oob_info['oob'].lower()
-    oob_config = {}
+    cfg = {}
     try:
         oob_params = config[oob_name]
     except KeyError:
         raise BMCManagerError('Invalid OOB name {}'.format(oob_name))
 
-    if dcim.supports_secrets() and 'credentials' in oob_params:
+    if get_secret and dcim.supports_secrets() and 'credentials' in oob_params:
         secret = dcim.get_secret(oob_params['credentials'], oob_info)
-        oob_config['username'] = secret['name']
-        oob_config['password'] = secret['plaintext']
+        cfg['username'] = secret['name']
+        cfg['password'] = secret['plaintext']
     else:
-        oob_config['username'] = oob_params['username']
-        oob_config['password'] = oob_params['password']
+        cfg['username'] = oob_params['username']
+        cfg['password'] = oob_params['password']
 
-    oob_config['nfs_share'] = os.getenv(
+    cfg['username'] = os.getenv('BMCMANAGER_USERNAME', cfg['username'])
+    cfg['password'] = os.getenv('BMCMANAGER_PASSWORD', cfg['password'])
+
+    cfg['nfs_share'] = os.getenv(
         'BMCMANAGER_NFS_SHARE', oob_params.get('nfs_share'))
-    oob_config['http_share'] = os.getenv(
+    cfg['http_share'] = os.getenv(
         'BMCMANAGER_HTTP_SHARE', oob_params.get('http_share'))
 
-    oob_config['oob_params'] = oob_params
-    return oob_config
+    cfg['oob_params'] = oob_params
+    return cfg
+
+
+def bmcmanager_take_action(cmd, parsed_args):
+    cmd.parsed_args = parsed_args
+    cmd.config = get_config(parsed_args.config)
+    dcim = get_dcim(parsed_args, cmd.config)
+
+    for oob_info in dcim.get_oobs():
+        oob_config = get_oob_config(cmd.config, dcim, oob_info)
+        log.debug('Creating OOB object for {}'.format(oob_info['oob']))
+        try:
+            oob = OOBS.get(oob_info['oob'])(parsed_args, dcim, oob_config, oob_info)
+        except KeyError:
+            raise BMCManagerError('Invalid OOB {}'.format(oob_info['oob']))
+
+        try:
+            if hasattr(cmd, 'oob_method'):
+                return getattr(oob, cmd.oob_method)()
+            else:
+                return cmd.action(oob)
+        except Exception as e:
+            log.exception('Unhandled exception: {}'.format(e))
 
 
 class BMCManagerServerCommand(Command):
     """
     Base command for working with a server
     """
+    dcim_fetch_secrets = True
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         base_arguments(parser)
@@ -107,27 +160,8 @@ class BMCManagerServerCommand(Command):
         return parser
 
     def take_action(self, parsed_args):
-        self.parsed_args = parsed_args
-        self.config = get_config(parsed_args.config)
-        dcim = get_dcim(parsed_args, self.config)
-
-        for oob_info in dcim.get_oobs():
-            oob_config = get_oob_config(self.config, dcim, oob_info)
-            log.debug('Creating OOB object for {}'.format(oob_info['oob']))
-            try:
-                oob = OOBS.get(oob_info['oob'])(parsed_args, dcim, oob_config, oob_info)
-            except KeyError:
-                raise BMCManagerError('Invalid OOB {}'.format(oob_info['oob']))
-
-            try:
-                if hasattr(self, 'oob_method'):
-                    getattr(oob, self.oob_method)()
-                else:
-                    self.action(oob)
-
-                sys.exit(exitcode.get())
-            except Exception as e:
-                log.exception('Unhandled exception: {}'.format(e))
+        bmcmanager_take_action(self, parsed_args)
+        sys.exit(exitcode.get())
 
     def action(self, oob):
         raise NotImplementedError
@@ -137,6 +171,8 @@ class BMCManagerServerGetCommand(ShowOne):
     """
     Base command for retrieving information for a server
     """
+    dcim_fetch_secrets = True
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         base_arguments(parser)
@@ -144,27 +180,7 @@ class BMCManagerServerGetCommand(ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        self.parsed_args = parsed_args
-        self.config = get_config(parsed_args.config)
-        dcim = get_dcim(parsed_args, self.config)
-
-        for oob_info in dcim.get_oobs():
-            oob_config = get_oob_config(self.config, dcim, oob_info)
-            log.debug('Creating OOB object for {}'.format(oob_info['oob']))
-            try:
-                oob = OOBS.get(oob_info['oob'])(parsed_args, dcim, oob_config, oob_info)
-            except KeyError:
-                raise BMCManagerError('Invalid OOB {}'.format(oob_info['oob']))
-
-            try:
-                if hasattr(self, 'oob_method'):
-                    return getattr(oob, self.oob_method)()
-                else:
-                    return self.action(oob)
-
-                sys.exit(exitcode.get())
-            except Exception as e:
-                log.exception('Unhandled exception: {}'.format(e))
+        return bmcmanager_take_action(self, parsed_args)
 
     def action(self, oob):
         raise NotImplementedError
@@ -174,6 +190,8 @@ class BMCManagerServerListCommand(Lister):
     """
     Base command for retrieving a list of information for a server
     """
+    dcim_fetch_secrets = True
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         base_arguments(parser)
@@ -181,27 +199,7 @@ class BMCManagerServerListCommand(Lister):
         return parser
 
     def take_action(self, parsed_args):
-        self.parsed_args = parsed_args
-        self.config = get_config(parsed_args.config)
-        dcim = get_dcim(parsed_args, self.config)
-
-        for oob_info in dcim.get_oobs():
-            oob_config = get_oob_config(self.config, dcim, oob_info)
-            log.debug('Creating OOB object for {}'.format(oob_info['oob']))
-            try:
-                oob = OOBS.get(oob_info['oob'])(parsed_args, dcim, oob_config, oob_info)
-            except KeyError:
-                raise BMCManagerError('Invalid OOB {}'.format(oob_info['oob']))
-
-            try:
-                if hasattr(self, 'oob_method'):
-                    return getattr(oob, self.oob_method)()
-                else:
-                    return self.action(oob)
-
-                sys.exit(exitcode.get())
-            except Exception as e:
-                log.exception('Unhandled exception: {}'.format(e))
+        return bmcmanager_take_action(self, parsed_args)
 
     def action(self, oob):
         raise NotImplementedError

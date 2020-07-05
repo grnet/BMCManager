@@ -112,7 +112,6 @@ class OobBase(object):
 
     # command is an array
     def _execute_cmd(self, command, output=False):
-        print(command)
         log.debug('Executing {}'.format(' '.join(command)))
         try:
             if output:
