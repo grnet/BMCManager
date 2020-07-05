@@ -35,6 +35,20 @@ class FlushJobs(BMCManagerServerCommand):
     oob_method = 'flush_jobs'
 
 
+class Identify(BMCManagerServerCommand):
+    """
+    Turn on/off server identifier LED
+    """
+    oob_method = 'identify'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('--on', nargs='?', type=int, default=15)
+        group.add_argument('--off', action='store_true', default=False)
+        return parser
+
+
 class Diagnostics(BMCManagerServerCommand):
     """
     Print server diagnostics

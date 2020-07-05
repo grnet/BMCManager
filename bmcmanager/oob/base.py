@@ -126,21 +126,17 @@ class OobBase(object):
                 ' '.join(command), str(e)))
 
     def identify(self):
-        if len(self.command_args) != 1:
-            raise OobError('Wrong number of args')
-
-        try:
-            int(self.command_args[0])
-        except ValueError:
-            raise OobError('Argument not an int')
+        if self.parsed_args.off:
+            arg = 0
+        else:
+            arg = self.parsed_args.on or 'force'
 
         self._print(self._execute(
-            ['chassis', 'identify', self.command_args[0]],
-            output=True
-        ).strip())
+            ['chassis', 'identify', str(arg)], output=True).strip())
 
     def status(self):
-        lines = self._execute(['chassis', 'status'], output=True).strip().split('\n')
+        lines = self._execute(
+            ['chassis', 'status'], output=True).strip().split('\n')
         columns, values = [], []
         for line in lines:
             try:
