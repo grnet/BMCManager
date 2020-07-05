@@ -34,6 +34,9 @@ class DcimBase(object):
     def get_oobs(self):
         raise NotImplementedError('get_oobs not implemented')
 
+    def oob_url(self):
+        raise NotImplementedError
+
     def supports_secrets(self):
         return getattr(self, 'get_secret') is not None
 

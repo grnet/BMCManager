@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections import defaultdict
 from datetime import datetime
 import json
 import urllib
@@ -61,7 +60,7 @@ class LenovoBase(LatestFirmwareFetcher):
 
         tracked_firmware = {**TRACKED_FIRMWARE, **self.extra_firmware}
 
-        result = defaultdict(lambda: [])
+        result = []
         downloads = []
         for item in items:
             try:
@@ -75,7 +74,8 @@ class LenovoBase(LatestFirmwareFetcher):
                 downloads.append(fw['URL'])
 
                 timestamp = datetime.fromtimestamp(fw['Date']['Unix'] / 1000)
-                result[component].append({
+                result.append({
+                    'component': component,
                     'name': item['Title'],
                     'version': item['SummaryInfo']['Version'],
                     'date': str(timestamp),

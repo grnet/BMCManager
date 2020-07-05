@@ -89,12 +89,12 @@ def psu_checks(all_psu_versions, version_dict):
 def check_firmware(custom_fields, oob_params):
     result, msg = nagios.OK, []
 
-    psus = psu_checks(custom_fields['PSU'], oob_params)
+    psus = psu_checks(custom_fields['PSU'], oob_params['oob_params'])
     checks = {
         'bios': check_version_strings(
-            custom_fields['BIOS'], oob_params.get('bios')),
+            custom_fields['BIOS'], oob_params['oob_params'].get('bios')),
         'tsm': check_version_strings(
-            custom_fields['TSM'], oob_params.get('tsm')),
+            custom_fields['TSM'], oob_params['oob_params'].get('tsm')),
         **psus,
     }
 
@@ -104,7 +104,7 @@ def check_firmware(custom_fields, oob_params):
         result = max(state, result)
 
     try:
-        expected_psus = int(oob_params['expected_psus'])
+        expected_psus = int(oob_params['oob_params']['expected_psus'])
         if expected_psus != len(psus):
             msg.append('{} PSUs present (expected {})'.format(
                 len(psus), expected_psus))

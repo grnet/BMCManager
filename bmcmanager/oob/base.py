@@ -14,21 +14,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import argparse
-import json
 import os
 import re
 from subprocess import Popen, check_output, CalledProcessError, call
 import sys
-import urllib.request
-import urllib.error
 
 import paramiko
 
 from bmcmanager.interactive import posix_shell
 from bmcmanager.utils import firmware
 from bmcmanager import nagios
-from bmcmanager.firmwares import firmware_fetchers
 from bmcmanager.logs import log
 
 if sys.platform == 'darwin':
@@ -68,11 +63,10 @@ class OobBase(object):
         log.debug('Executing info')
         info = self.oob_info['info']
 
-        info_str = ''
-        for key, val in info.items():
-            info_str += ('{}:{}\n'.format(key.replace('_', ' ').upper(), val))
+        columns = info.keys()
+        values = [info[col] for col in columns]
 
-        self._print(info_str[:-1])
+        return columns, values
 
     def _execute_popen(self, command):
         log.debug('Executing {}'.format(' '.join(command)))
@@ -118,6 +112,7 @@ class OobBase(object):
 
     # command is an array
     def _execute_cmd(self, command, output=False):
+        print(command)
         log.debug('Executing {}'.format(' '.join(command)))
         try:
             if output:
@@ -146,10 +141,18 @@ class OobBase(object):
         ).strip())
 
     def status(self):
-        self._print(self._execute(
-            ['chassis', 'status'],
-            output=True
-        ).strip())
+        lines = self._execute(['chassis', 'status'], output=True).strip().split('\n')
+        columns, values = [], []
+        for line in lines:
+            try:
+                key, value = line.split(':')
+            except ValueError:
+                continue
+
+            columns.append(key.strip())
+            values.append(value.strip())
+
+        return columns, values
 
     def power_status(self):
         self._print(self._execute(
@@ -199,7 +202,13 @@ class OobBase(object):
         return ['sel', 'list', *args]
 
     def ipmi_logs(self):
-        self._print(self._execute(self._ipmi_logs_cmd(), output=True).strip())
+        lines = self._execute(
+            self._ipmi_logs_cmd(), output=True).strip().split('\n')
+
+        columns = ['id', 'date', 'time', 'name', 'event', 'state']
+        values = [list(map(str.strip, line.split('|'))) for line in lines]
+
+        return columns, values
 
     def clear_ipmi_logs(self):
         self._print(self._execute(['sel', 'clear'], output=True).strip())
@@ -283,7 +292,11 @@ class OobBase(object):
     def ipmi_sensors(self):
         host = self.oob_info['ipmi'].replace('https://', '')
         cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
-        self._execute_cmd(cmd)
+        lines = self._execute_cmd(cmd, output=True).strip().split('\n')
+        columns = list(map(str.strip, lines[0].split('|')))
+        values = [list(map(str.strip, line.split('|'))) for line in lines[1:]]
+
+        return (columns, values)
 
     def _format_sensor(self, sensor):
         return '- ' + ' | '.join([sensor[x] for x in [
@@ -458,35 +471,32 @@ class OobBase(object):
 
     def get_secrets(self):
         if not self.dcim.supports_secrets():
-            self._print('secrets not supported')
+            log.fatal('Secrets not supported by DCIM')
 
-        self._print('\n'.join(
-            map(str, self.dcim.get_secrets(self.oob_info['info']))))
+        secrets = self.dcim.get_secrets(self.oob_info['info'])
+
+        columns = ['id', 'role', 'name', 'plaintext']
+        values = [[secret[col] for col in columns] for secret in secrets]
+        return columns, values
 
     def set_secret(self):
         if not self.dcim.supports_secrets():
-            self._print('secrets not supported')
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--secret-role', type=str, required=True)
-        parser.add_argument('--secret-name', type=str, required=True)
-        parser.add_argument('--secret-plaintext', type=str, required=True)
-        args = parser.parse_args(self.command_args)
+            log.fatal('Secrets not supported by DCIM')
 
         r = self.dcim.set_secret(
-            args.secret_role,
+            self.parsed_args.secret_role,
             self.oob_info['info'],
-            args.secret_name,
-            args.secret_plaintext)
+            self.parsed_args.secret_name,
+            self.parsed_args.secret_plaintext)
 
         if r.status_code >= 300:
             self._print('Error {}'.format(r.text))
 
+    def ipmitool(self):
+        self._execute(self.parsed_args.args)
+
     def set_ipmi_password(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--secret-role', type=str, required=False)
-        parser.add_argument('--new-password', type=str, required=True)
-        args = parser.parse_args(self.command_args)
+        args = self.parsed_args
 
         stdout = self._execute(['user', 'list'], output=True).split('\n')
         header = stdout[0]
@@ -521,47 +531,6 @@ class OobBase(object):
     def get_firmware(self):
         raise NotImplementedError('get-firmware')
 
-    def check_firmware_updates(self):
-        parser = argparse.ArgumentParser('check-firmware-updates')
-        parser.add_argument('--download-to', type=str)
-        parser.add_argument('--innoextract', action='store_true')
-
-        args = parser.parse_args(self.command_args)
-
-        try:
-            fetcher = firmware_fetchers[self.oob_info['info']['device_type']]
-
-        except KeyError as e:
-            log.error('Unsupported device type: {}'.format(e))
-            sys.exit(-1)
-
-        firmwares, downloads = fetcher(self.oob_config).get()
-
-        if args.download_to is None:
-            print(json.dumps(firmwares, indent=2))
-            return
-
-        try:
-            os.makedirs(args.download_to, exist_ok=True)
-        except OSError as e:
-            log.error('Could not create download directory: {}'.format(e))
-            sys.exit(-1)
-
-        for url in downloads:
-            name = url[url.rfind('/') + 1:]
-            file_name = os.path.join(args.download_to, name)
-            log.info('Downloading {} to {}'.format(url, file_name))
-            try:
-                with open(file_name, 'wb') as fout:
-                    fout.write(urllib.request.urlopen(url).read())
-            except (urllib.error.URLError, OSError) as e:
-                log.error('Failed: {}'.format(e))
-
-            if args.innoextract and name.endswith('.exe'):
-                log.info('Extracting with innoextract')
-                self._execute_cmd([
-                    'innoextract', file_name, '-d', args.download_to])
-
     def firmware_upgrade(self):
         raise NotImplementedError('firmware-upgrade')
 
@@ -574,24 +543,16 @@ class OobBase(object):
         if all(self._sel_is_firmware_upgrade(err) for err in sel_errors):
             self.clear_ipmi_logs()
 
-    def _get_ipmi_address(self, cmd_args):
-        parser = argparse.ArgumentParser('bmcmanager refresh-ipmi-address')
-        parser.add_argument(
-            '--type', choices=['ipv4', 'macaddress'], required=True)
-        parser.add_argument(
-            '--scheme', choices=['http', 'https', ''], default='https')
-        parser.add_argument(
-            '--domain', help='Domain name, only with type "macaddress"')
-        args = parser.parse_args(cmd_args)
-
+    def _get_ipmi_address(self):
+        args = self.parsed_args
         regex = {
             'ipv4': r'^IP Address\s*:\s*(?P<addr>\d+(\.\d+){3})',
-            'macaddress':
+            'mac':
                 r'MAC Address\s*:\s*(?P<addr>[a-f0-9]{2}(\:[a-f0-9]{2}){5})',
-        }.get(args.type)
+        }.get(args.address_type)
 
         if regex is None:
-            log.error('Unknown IPMI address type: {}'.format(args.type))
+            log.error('Unknown address type: {}'.format(args.address_type))
             return ''
 
         stdout = self._execute(['lan', 'print'], output=True)
@@ -602,7 +563,7 @@ class OobBase(object):
             return
 
         addr = m.group('addr')
-        if args.type == 'macaddress':
+        if args.address_type == 'mac':
             addr = addr.replace(':', '').upper()
             if args.domain:
                 addr = '{}.{}'.format(addr, args.domain.lstrip('.'))
@@ -612,15 +573,18 @@ class OobBase(object):
         return addr
 
     def refresh_ipmi_address(self):
-        addr = self._get_ipmi_address(self.command_args)
+        addr = self._get_ipmi_address()
         custom_fields = {'IPMI': addr}
         log.info('Patching custom fields: {}'.format(custom_fields))
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
             log.error('Failed to refresh IPMI')
 
     def get_ipmi_address(self):
-        addr = self._get_ipmi_address(self.command_args)
-        self._print(addr)
+        addr = self._get_ipmi_address()
+        return ('address',), (addr,)
+
+    def open_dcim(self):
+        self._execute_popen([BROWSER_OPEN, self.dcim.oob_url(self.oob_info)])
 
 
 class OobError(Exception):

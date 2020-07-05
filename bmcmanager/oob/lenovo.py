@@ -14,9 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import argparse
 from datetime import datetime, timedelta
-import json
 import re
 from subprocess import Popen
 import sys
@@ -157,8 +155,8 @@ class Lenovo(OobBase):
                 print(' '.join(cmd))
             else:
                 Popen(cmd)
-        except:
-            sys.stderr.write('Could not open Java console.\n')
+        except Exception as e:
+            sys.stderr.write('Could not open Java console. {}\n'.format(e))
             sys.exit(10)
 
     def _system_ram(self):
@@ -181,14 +179,11 @@ class Lenovo(OobBase):
             return 0
 
     def system_ram(self):
-        self._print('RAM: {}GB'.format(str(self._system_ram())))
+        return ('ram_gb',), (self._system_ram(),)
 
     def check_ram(self):
         pre = '{} installed RAM'.format(self.oob_info['identifier'])
-        try:
-            expected = int(self.command_args[0])
-        except (TypeError, IndexError):
-            expected = None
+        expected = self.parsed_args.expected
 
         ram = self._system_ram()
         if (expected is None and ram > 0) \
@@ -258,10 +253,12 @@ class Lenovo(OobBase):
     def ipmi_logs_analysed(self):
         sel = self._get_sel()
         if not sel:
-            self._print('No entries')
+            return (None, None)
 
-        self._print('\n'.join(
-            map(lambda x: ' | '.join(map(str, x.values())), reversed(sel))))
+        columns = sel[0].keys()
+        values = [[line[col] for col in columns] for line in sel]
+
+        return columns, values
 
     def _format_disk(self, disk):
         return ' | '.join(map(str, [
@@ -319,19 +316,14 @@ class Lenovo(OobBase):
         ])
 
     def get_firmware(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--only', type=str, default='TSM,BIOS,PSU')
-        parser.add_argument('--all', action='store_true', default=False)
-        args = parser.parse_args(self.command_args)
-
-        allowed = list(map(lambda x: x.strip().upper(), args.only.split(',')))
         firmwares = self._get_image_info()
+        if not firmwares:
+            return (None, None)
 
-        if not args.all:
-            firmwares = filter(
-                lambda x: (DEV_ID[x['DEV_TYPE']] in allowed), firmwares)
+        columns = firmwares[0].keys()
+        values = [[f[col] for col in columns] for f in firmwares]
 
-        self._print('\n'.join(map(self._format_fw, firmwares)))
+        return columns, values
 
     def refresh_firmware(self):
         custom_fields = {}
@@ -358,59 +350,18 @@ class Lenovo(OobBase):
     def _matching(self, d1, d2):
         return d1['DEV_IDENTIFIER'] == d2['DEV_IDENTIFIER']
 
-    def firmware_upgrade(self):
-        parser = argparse.ArgumentParser('firmware-upgrade')
-        parser.add_argument('--mode', choices=['osput', 'rpc'], required=True)
-        parser.add_argument('--clear-logs', action='store_true', default=False)
-        args, cmdargs = parser.parse_known_args(self.command_args)
-
-        if args.mode == 'osput':
-            self.firmware_upgrade_osput(cmdargs)
-        if args.mode == 'rpc':
-            self.firmware_upgrade_rpc(cmdargs)
-
-        if args.clear_logs:
-            self.clear_firmware_upgrade_logs()
-
-    def firmware_upgrade_osput(self, cmdargs):
-        parser = argparse.ArgumentParser('firmware-upgrade osput')
-        parser.add_argument('--bundle', type=str, required=True)
-        args = parser.parse_args(cmdargs)
-
+    def firmware_upgrade_osput(self):
         ipmi = self.oob_info['ipmi'].replace('https://', '')
         return self._execute_cmd([
-            'osput',
+            self.parsed_args.osput,
             '-H', ipmi,
             '-u', self.username,
             '-p', self.password,
-            '-f', args.bundle,
+            '-f', self.parsed_args.bundle,
             '-c', 'update'])
 
-    def firmware_upgrade_rpc(self, cmdargs):
-
-        def int_in(itt):
-            def argparse_type(value):
-                ivalue = int(value)
-                if ivalue not in itt:
-                    raise argparse.ArgumentTypeError(
-                        '{} out of valid range [{}..{}]'.format(
-                            value, min(itt), max(itt)))
-                return ivalue
-
-            return argparse_type
-
-        all_stages = range(1, 11)
-
-        parser = argparse.ArgumentParser('firmware-upgrade rpc')
-        parser.add_argument('--timeout', type=int, default=60)
-        parser.add_argument('--reboot', action='store_true', default=False)
-        parser.add_argument('--handle', type=int, default=None)
-        parser.add_argument(
-            '--stages', nargs='+', default=all_stages, type=int_in(all_stages))
-        parser.add_argument(
-            '--bundle', required=True, type=argparse.FileType('rb'))
-
-        args = parser.parse_args(cmdargs)
+    def firmware_upgrade_rpc(self):
+        args = self.parsed_args
         handle = None
 
         if 1 in args.stages:
@@ -509,9 +460,6 @@ class Lenovo(OobBase):
 
         log.info('Firmware upgrade process started')
 
-        if args.reboot:
-            self.power_reset()
-
         if 9 in args.stages:
             begin = datetime.utcnow()
             while datetime.utcnow() < begin + timedelta(minutes=args.timeout):
@@ -547,19 +495,13 @@ class Lenovo(OobBase):
         log.info('Done!')
 
     def lenovo_rpc(self):
-        def json_params(arg):
-            try:
-                return json.loads(arg)
-            except json.JSONDecodeError as e:
-                raise argparse.ArgumentTypeError('invalid JSON') from e
+        args = self.parsed_args
+        response = self._get_rpc(args.rpc, 'RPC call', args.params)
 
-        parser = argparse.ArgumentParser('lenovo-rpc')
-        parser.add_argument('--rpc', required=True)
-        parser.add_argument('--output', type=json_params, default={})
-        parser.add_argument(
-            '--params',
-            type=json_params, help='Parameters in JSON format')
-        args = parser.parse_args(self.command_args)
+        if not response:
+            return (None, None)
 
-        r = self._get_rpc(args.rpc, 'RPC call', args.params)
-        print(json.dumps(r, **args.output))
+        columns = list(response[0].keys())
+        values = [[r[col] for col in columns] for r in response]
+
+        return columns, values

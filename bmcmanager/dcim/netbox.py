@@ -230,3 +230,6 @@ class Netbox(DcimBase):
                 'custom_fields': custom_fields,
             },
         ).status_code == 200
+
+    def oob_url(self, oob_info):
+        return os.path.join(self.api_url, 'dcim/devices/{}/'.format(oob_info['info']['id']))
