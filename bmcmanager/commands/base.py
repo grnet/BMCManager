@@ -145,6 +145,9 @@ def bmcmanager_take_action(cmd, parsed_args):
                 return cmd.action(oob)
         except Exception as e:
             log.exception('Unhandled exception: {}'.format(e))
+    else:
+        log.fatal('No servers found for "{}"'.format(parsed_args.server))
+        return [], []
 
 
 class BMCManagerServerCommand(Command):
