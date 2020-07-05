@@ -42,8 +42,9 @@ if not os.getenv('BMCMANAGER_IGNORE_MISSING_BINARIES'):
         '/usr/sbin/ipmi-dcmi',
     ]:
         if not os.path.isfile(exe) or not os.access(exe, os.X_OK):
-            print('{}: No such file or directory. Please refer to README.md '
-                  'for installing missing package dependencies.'.format(exe))
+            print('{}: No such file or directory. Please refer to README.md \
+for installing missing package dependencies, or set the \
+BMCMANAGER_IGNORE_MISSING_BINARIES environment variable'.format(exe))
             sys.exit(-1)
 
 
