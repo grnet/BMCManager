@@ -13,13 +13,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+from bmcmanager.commands.base import (
+    BMCManagerServerCommand,
+    BMCManagerServerGetCommand
+)
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+
+class Get(BMCManagerServerGetCommand):
+    """
+    Retrieve IPMI credentials
+    """
+    oob_method = 'creds'
+
+
+class Set(BMCManagerServerCommand):
+    """
+    Change user IPMI password
+    """
+    oob_method = 'set_ipmi_password'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('--secret-role', type=str, required=False)
+        parser.add_argument('--new-password', type=str, required=True)
+        return parser

@@ -42,8 +42,9 @@ if not os.getenv('BMCMANAGER_IGNORE_MISSING_BINARIES'):
         '/usr/sbin/ipmi-dcmi',
     ]:
         if not os.path.isfile(exe) or not os.access(exe, os.X_OK):
-            print('{}: No such file or directory. Please refer to README.md '
-                  'for installing missing package dependencies.'.format(exe))
+            print('{}: No such file or directory. Please refer to README.md \
+for installing missing package dependencies, or set the \
+BMCMANAGER_IGNORE_MISSING_BINARIES environment variable'.format(exe))
             sys.exit(-1)
 
 
@@ -57,9 +58,65 @@ def setup_package():
         packages=find_packages(),
         entry_points={
             'console_scripts': [
-                'bmcmanager=bmcmanager.__main__:main',
-                'bmcm=bmcmanager.__main__:main',
+                'bmcmanager = bmcmanager.cliff:main',
+                'bmcm = bmcmanager.cliff:main',
             ],
+            'bmcmanager.entrypoints': [
+                'open console = bmcmanager.commands.open:Console',
+                'open dcim = bmcmanager.commands.open:DCIM',
+                'open web = bmcmanager.commands.open:Web',
+                'check firmware = bmcmanager.commands.firmware:Check',
+                'check sensor = bmcmanager.commands.ipmi.sensor:Check',
+                'check disks = bmcmanager.commands.disks:Check',
+                'check ram = bmcmanager.commands.ram:Check',
+                'disks check = bmcmanager.commands.disks:Check',
+                'disks get = bmcmanager.commands.disks:Get',
+                'firmware get = bmcmanager.commands.firmware:Get',
+                'firmware refresh = bmcmanager.commands.firmware:Refresh',
+                'firmware check = bmcmanager.commands.firmware:Check',
+                'firmware latest get = bmcmanager.commands.firmware:Latest',
+                'firmware upgrade rpc = bmcmanager.commands.firmware:UpgradeRPC',
+                'firmware upgrade osput = bmcmanager.commands.firmware:UpgradeOsput',
+                'ipmi address get = bmcmanager.commands.ipmi.address:Get',
+                'ipmi address refresh = bmcmanager.commands.ipmi.address:Refresh',
+                'ipmi credentials get = bmcmanager.commands.ipmi.credentials:Get',
+                'ipmi credentials set = bmcmanager.commands.ipmi.credentials:Set',
+                'ipmi logs clear = bmcmanager.commands.ipmi.logs:Clear',
+                'ipmi logs get = bmcmanager.commands.ipmi.logs:Get',
+                'ipmi reset = bmcmanager.commands.ipmi.reset:Reset',
+                'ipmi sensor check = bmcmanager.commands.ipmi.sensor:Check',
+                'ipmi sensor get = bmcmanager.commands.ipmi.sensor:Get',
+                'ipmi ssh = bmcmanager.commands.ipmi.ssh:SSH',
+                'ipmi tool = bmcmanager.commands.ipmitool:Run',
+                'lenovo rpc do = bmcmanager.commands.lenovo:Do',
+                'lenovo rpc list = bmcmanager.commands.lenovo:List',
+                'netbox secret list = bmcmanager.commands.netbox:ListSecrets',
+                'netbox secret set = bmcmanager.commands.netbox:SetSecret',
+                'power cycle = bmcmanager.commands.power:PowerCycle',
+                'power off = bmcmanager.commands.power:PowerOff',
+                'power on = bmcmanager.commands.power:PowerOn',
+                'power reset = bmcmanager.commands.power:PowerReset',
+                'power status = bmcmanager.commands.power:PowerStatus',
+                'power switch lock = bmcmanager.commands.power:LockSwitch',
+                'power switch unlock = bmcmanager.commands.power:UnlockSwitch',
+                'ram check = bmcmanager.commands.ram:Check',
+                'ram get = bmcmanager.commands.ram:Get',
+                'server boot local = bmcmanager.commands.server.boot:Local',
+                'server boot pxe = bmcmanager.commands.server.boot:PXE',
+                'server status get = bmcmanager.commands.server.status:Get',
+                'server status storage = bmcmanager.commands.server.status:Storage',
+                'server status controllers = bmcmanager.commands.server.status:Controllers',
+                'server status pdisks = bmcmanager.commands.server.status:PDisks',
+                'server autoupdate enable = bmcmanager.commands.server.autoupdate:Enable',
+                'server autoupdate disable = bmcmanager.commands.server.autoupdate:Disable',
+                'server diagnostics = bmcmanager.commands.server.server:Diagnostics',
+                'server identify = bmcmanager.commands.server.server:Identify',
+                'server info get = bmcmanager.commands.server.server:Info',
+                'server info idrac = bmcmanager.commands.server.server:IdracInfo',
+                'server upgrade = bmcmanager.commands.server.server:Upgrade',
+                'server ssh = bmcmanager.commands.server.server:SSH',
+                'server jobs flush = bmcmanager.commands.server.server:FlushJobs',
+            ]
         },
         install_requires=[
             'bs4',

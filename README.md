@@ -1,170 +1,235 @@
-BMCManager
-==========
+# BMCManager
 
-`bmcmanager` is a tool for performing operations on rack units.
+## Introduction
 
-`bmcmanager` is released under the terms of the GPL-3.0 license
+[`bmcmanager`](https://github.com/grnet/bmcmanager.git) is a tool for performing operations on rack units. It originated as a [`rackops`](https://github.com/grnet/rackops.git) fork, but has since been re-written almost from scratch, offering lots of additional functionality, bug-fixes and all-around improvements.
 
-This is a fork of the `rackops` tool, with bug-fixes, improvements and lots of additional functionality. The original `rackops` tool can be found [here][1].
+`bmcmanager` supports Lenovo, Dell and Fujitsu servers, and relies on [`NetBox`](https://netbox.readthedocs.io/en/stable/) for DCIM and IPAM.
 
-It currently supports Netbox hosts and the Lenovo, Fujitsu, Dell providers.
+`bmcmanager` is released under the terms of the GPL-3.0 license.
 
-To add a host or provider read [CONTRIBUTING.md](docs/CONTRIBUTING.md).
+## Features
 
-Installation (using Pip)
-========================
+`bmcmanager` features include and our not limited to:
 
-1.  Install `ipmitool`, `ipmi-sensor`, `ipmi-sel` and `ipmi-dcmi`.
+- Manage SEL and IPMI sensor readings.
+- Get information for system RAM, disks, power status.
+- IPMI management commands (power on, power off, power cycle, reset and more).
+- Check for latest firmware versions and perform firmware upgrades.
+- Nagios/Icinga compatible IPMI server checks (sensors, logs, disks, and more).
+- Open console (requires JavaWS).
+- Manage NetBox secrets.
+- Configure unique IPMI credentials per server, store them as NetBox secrets and retrieve them automatically from NetBox.
+- Bash auto-completion.
+- Supports multiple output formats supported.
 
-    For Ubuntu/Debian: `sudo apt-get install freeipmi ipmitool`.
+## Installation
 
-    For CentOS/Fedora: `sudo yum install freeipmi ipmitool`.
+### Pip
 
-1.  (Optional) Install `osput` for Lenovo firmware upgrades.
+1. Install dependencies:
+   ```bash
+   # For Ubuntu/Debian
+   $ sudo apt-get install freeipmi ipmitool icedtea-netx
+   # For CentOS/Fedora
+   $ sudo yum install freeipmi ipmitool icedtea-web
+   ```
 
-    For CentOS/Fedora:
+2. (Optional) Install `osput` for Lenovo firmware upgrades.
+   ```bash
+   # For CentOS/Fedora:
+   $ wget https://download.lenovo.com/pccbbs/thinkservers/osput_1.3.2.zip
+   $ unzip osput_1.3.2.zip
+   $ yum install -y OSPUT-1.3.2/osput-1.3.2-1-rhel.x86_64.rpm
+   ```
 
-    ```
-    wget https://download.lenovo.com/pccbbs/thinkservers/osput_1.3.2.zip
-    unzip osput_1.3.2.zip
-    yum install -y OSPUT-1.3.2/osput-1.3.2-1-rhel.x86_64.rpm
-    ```
+3. Install `bmcmanager`:
+   ```bash
+   $ git clone https://github.com/grnet/bmcmanager.git
+   $ cd bmcmanager
+   $ pip3 install .
+   $ bmcmanager --help
+   ```
 
-1.  `git clone https://github.com/grnet/bmcmanager`
+### Snap
 
-1.  `cd bmcmanager && pip3 install .`
+1. You can install `bmcmanager` as a snap package:
+   ```bash
+   $ sudo snap install bmcmanager
+   ```
 
-If you get errors for missing binaries, but you want to install anyway, do `env BMCMANAGER_IGNORE_MISSING_BINARIES=1 pip3 install .` instead.
+Snap Limitations:
 
-Installation (Snap)
-===================
+- The snap package is installed with `strict` confinement, so it is not allowed to read your files. If you want to use a config file, you need to put it under the `SNAP_COMMON` directory, which typically is `/var/snap/bmcmanager/common`.
+- The snap package does not contain JavaWS, so opening a console is not possible.
 
-`bmcmanager` is also available as a snap package.
+### Docker Image
 
-1.  `sudo snap install bmcmanager`.
+1. Development and Release Docker images for `bmcmanager` are available at [DockerHub](https://hub.docker.com/r/cloudeng/bmcmanager):
+   ```bash
+   $ docker pull cloudeng/bmcmanager
+   $ docker run --rm -it --entrypoint bash cloudeng/bmcmanager
+   > bmcmanager --help
+   ```
 
-The Snap package is installed with `strict` confinement, so it is not allowed to read your files. If you want to use a config file, you need to put it under the `SNAP_COMMON` directory, which typically is `/var/snap/bmcmanager/common`.
+Docker Limitations:
 
-Configuration
-=============
+- The docker image does not contain JavaWS, so opening a console is not possible.
 
-`bmcmanager` uses a single configuration file. It defaults to `~/.config/bmcmanager` or `$XDG_CONFIG_HOME/bmcmanager` if the environment variable `$XDG_CONFIG_HOME` is set, but a different configuration file can be used using the `-c` command line argument.
+## Configuration
+
+`bmcmanager` uses a single configuration file. It looks in `~/.config/bmcmanager` and `$XDG_CONFIG_HOME/bmcmanager` by default, but a different configuration file can be chosen by setting the `--config-file` command line argument.
 
 The configuration file should have this form:
 
 ```ini
-[<DCIM1>]
-api_url = <api_url1>
-netbox_token = <netbox_api_token>           ; optional, NetBox API token
+;; Configuration of "netbox" DCIM
+[netbox]
+; Required
+api_url = <netbox_api_url>
+; [Optional] Limit bmcmanager to query for certain device types only.
+device_type_ids = <id1>, <id2>, ...
+; Only if using NetBox secrets for IPMI credentials
+netbox_token = <netbox_api_token>
+session_key = <netbox_session_key>
 
-[<DCIM2>]
-api_url = <api_url2>
+;; Configuration of "lenovo" OOB
+[lenovo]
+; IPMI credentials
+username = <username>
+password = <password>
 
-[<OOB1>]
-username = <oob1_username>
-password = <oob1_password>
+; Use secret with role <secret_role> as IPMI credentials. Secret name will
+; be used as username, secret plaintext will be used as password. You need to
+; set `netbox_token` and `session_key` above for this to work.
+; If no secret is available, then `username` and `password` defined above will
+; be used instead.
+credentials = <secret_role>
+
+; [optional] Configure NFS share and HTTP share (used by some commands)
 nfs_share = "IP:/path/"
 http_share = "http://IP/path/"
-credentials = <dcim_secret_name_for_credentials>
 
-; Latest firmware versions to check against
+; [optional] Latest firmware versions to check against
+; Used by the `bmcmanager firmware check` command
 bios = <MAJOR.MINOR.PATCH>
 tsm = <MAJOR.MINOR.PATCH>
 psu_<model> = <MAJOR.MINOR.PATCH>
-expected_psus = 2
 
-[<OOB2>]
-username = <oob2_username>
-password = <oob2_password>
-nfs_share = "IP:/path/"
-http_share = "http://IP/path/"
+; [optional] Number of PSUs to expect per server
+; Used by the `bmcmanager firmware check` command
+expected_psus = 2
 ```
 
-where:
-- `<DCIM>` is the name of a dcim. Currently we only support the `netbox` dcim.
-- `<api_url>` is the API URL of the specified DCIM.
-  (i.e https://netbox.noc.grnet.gr/)
-- `<OOB>` is the name of an oob (i.e. lenovo)
-- `<username>` is the username associated with a specific oob.
-  while
-- `<password>` is the password that will be used for a specific oob.
-- `nfs_share` is the nfs share where diagnostics from Dell hosts are uploaded,
-- `http_share` is an http share where Dell hosts retrieve idrac updates from,
-
-If environment variables for the above values are defined, they will overwrite
-those from the configuration file. The environment variables supported are:
+Some configuration can be overriden using environment variables:
 
 - `BMCMANAGER_USERNAME`
 - `BMCMANAGER_PASSWORD`
 - `BMCMANAGER_NFS_SHARE`
 - `BMCMANAGER_HTTP_SHARE`
 
-If command line arguments for the username and password are defined, they will overwrite those from the configuration file and the environment variables.
+## Examples
 
-Usage
-=====
+- Retrieve the system event log for server `lar0510`:
+  ```bash
+  $ bmcmanager ipmi logs get lar0510
+  $ bmcmanager ipmi logs get lar0510 --analysed    # Decode OEM fields
+  ```
 
-`bmcmanager` can work as a CLI module or a python3 module.
+- Clear the system event log for server `lar0510`:
+  ```bash
+  $ bmcmanager ipmi logs clear lar0510
+  ```
 
-CLI
-===
+- Nagios check for IPMI sensor readings:
+  ```bash
+  $ bmcmanager ipmi sensor check lar0510
+  ```
 
-`bmcmanager <command> <identifier>`
+- Get information for disks attached to server:
+  ```bash
+  $ bmcmanager disks get lar0510
+  ```
 
-The non-required command line arguments are:
+- Get latest firmware versions for `thinkserver-rd550` servers, and download firmware bundles in `/opt/firmware-bundles`:
+  ```bash
+  $ bmcmanager firmware latest thinkserver-rd550 --download-to /opt/firmware-bundles
+  ```
 
-- `-d`, `--dcim`. Name of the DCIM to be used. Defaults to `netbox`.
-- `-r`, `--rack`. The identifier provided is an identifier for a rack.
-- `-a`, `--rack-unit`. The identifier provided is an identifier for a rack unit.
-- `-s`, `--serial`. The identifier provided is an identifier for a serial.
-- `-c`, `--config`. The location of the configuration file.
-- `-u`, `--username`
-- `-p`, `--password`. With this argument if the password is not provided as a string, the user will be prompted for entering a password.
-- `-f`, `--force`. Some commands can be run with this argument. See `Commands` for more details.
-- `-w`, `--wait`. Some commands can be run with this argument. See `Commands` for more details.
-- `-v`, `--verbose`. Set log level to INFO, and DEBUG for `-vv`.
+- Get firmware version for a server:
+  ```bash
+  $ bmcmanager firmware get lar0510
+  $ bmcmanager firmware get lar0510 -f json
+  ```
 
+- Perform a BIOS firmware upgrade using the `bios-v495.bdl` file:
+  ```bash
+  $ bmcmanager firmware upgrade rpc lar0510 --bundle bios-v495.bdl
+  ```
 
-As a module
-===========
+- Open JavaWS console:
+  ```bash
+  $ bmcmanager open console lar0510
+  ```
 
-1. `from bmcmanager.bmcmanager import BMCManager`
+- Power cycle server:
+  ```bash
+  $ bmcmanager power cycle lar0510
+  ```
 
-2. `bmcmanager = BMCManager(command, identifier, is_rack, is_rack_unit, is_serial, command_args, args, config, environment_variables)`.
-    - `config` should be a hash table with the values defined in the *Configuration* section.
-    - `args` should be a hash map containing the command line arguments specified above as keys (i.e. {"wait": True})
-    - `is_rack`, `is_rack_unit`, `is_serial` are boolean values specifying if the identifier corresponds to a rack, rack unit or serial respectively.
-    - `command_args` is a list containing arguments for the command to be run.
-    - `environment_variables` is a hash map containing the environment variables
-   specified above.
+- Connect to BMC using SSH:
+  ```bash
+  $ bmcmanager ipmi ssh lar0510
+  ```
 
-3. `bmcmanager.run()`
+- Change IPMI password and store in a NetBox secret with role `MY_SECRET_ROLE`. In the config file, set `credentials = MY_SECRET_ROLE` so that `bmcmanager` will use that automatically:
+  ```bash
+  $ export BMCMANAGER_USERNAME="DEFAULT_USER"
+  $ export BMCMANAGER_PASSWORD="DEFAULT_PASS"
+  $ bmcmanager ipmi credentials set lar0510 --new-password "NEW_PASSWORD" --secret-role "MY_SECRET_ROLE"
+  $ bmcmanager ipmi credentials get lar0510
+  ```
 
-Commands
-========
+## Usage
 
-Run `bmcmanager --help` to get a list of all available commands. Some typical
-commands are:
+Use `bmcmanager --help` for a list of available commands. Common command-line arguments for all supported commands are:
 
-- `info`: Print information regarding the machine.
-- `console`: Opens a Java console on the remote machine.
-- `open`: Opens the IPMI host url on the client machine.
-- `status`: Prints information regarding the status of the remote machine.
-- `power-status`: Prints whether the machine is on/off.
-- `power-on`: Powers on the machine.
-- `power-off`: Sends a signal to the operating system for shutoff. Can be run with the `--force` command line argument for a hard shutoff. Can be run with the `--wait` argument to wait until the operating system shutoff is complete before exiting.
-- `power-cycle`: Soft restart.
-- `power-reset`: Hard restart.
-- `boot-pxe`: Force pxe boot.
-- `boot-local`: Force boot from default harddrive.
-- `ipmi-reset`: Restart ipmi device. Can be run with the `--force` command line argument for resetting the ipmi device.
-- `ipmi-logs`: Print system event logs.
-- `clear-ipmi-logs`: Clear system event logs.
-- `ipmi-ssh`: Open interactive SSH session with IPMI.
-- `system-ram`: Print available system RAM.
-- `diagnostics` : Initiate diagnostics report on Dell ipmi and export it to an nfs share
-- `autoupdate`: Schedule auto updates on a Dell host every day at 08:30
-- `upgrade`: Instantly update an iDrac's firmware from an http share
-- `idrac-info`: Receive BIOS version and controller info from an iDrac
+| Parameter            | Type   | Description                                                                             |
+| -------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `--config-file FILE` | String | Read configuration from `FILE`                                                          |
+| `--log-file FILE`    | String | Write detailed logs to `FILE`                                                           |
+| `--verbose`          | Flag   | Print verbose details. **NOTE**: This may include sensitive information, like passwords |
 
-[1]: https://github.com/grnet/rackops.git "Rackops GitHub repository"
+Most `bmcmanager` commands have the following format:
+```bash
+$ bmcmanager <command-name> <server-name>
+```
+
+`bmcmanager` searches NetBox using `<server-name>` as query string and executes the command for all matching devices.
+
+The server selection arguments are:
+
+| Parameter        | Type                               | Default  | Description                                                                            |
+| ---------------- | ---------------------------------- | -------- |
+| `<server-name>`  | String                             | -        | Search NetBox for `<server-name>` and execute command on all matching devices          |
+| `-d/--dcim DCIM` | String                             | `netbox` | Use a different `DCIM`. Requires a separate `[DCIM]` section on the configuration file |
+| `-t/--type TYPE` | `name`/`rack`/`rack-unit`/`serial` | `name`   | Specifically match a rack, a rack unit, a serial number, or search by name             |
+
+Also use the `--help` flag to get more information for a particular command, e.g.:
+
+```bash
+$ bmcmanager ipmi logs get --help
+```
+
+## Auto-completion
+
+The `bmcmanager complete` generates a bash auto-completion script. You can use it directly:
+```bash
+$ . <(bmcmanager complete)
+$ bmcmanager        # pressing tab should show available commands
+```
+
+Or add the auto-completion script under `/etc/bash_completion.d/bmcmanager`, so that it is loaded automatically by `bash`:
+```bash
+$ echo ". <($(which bmcmanager) complete)" | sudo tee /etc/bash_completion.d/bmcmanager
+```

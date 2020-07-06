@@ -13,13 +13,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerGetCommand
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+
+class Get(BMCManagerServerGetCommand):
+    """
+    Print server status
+    """
+    oob_method = 'status'
+
+
+class Storage(BMCManagerServerCommand):
+    """
+    Print server storage status
+    """
+    oob_method = 'storage_status'
+
+
+class Controllers(BMCManagerServerCommand):
+    """
+    Print server controllers status
+    """
+    oob_method = 'controllers_status'
+
+
+class PDisks(BMCManagerServerCommand):
+    """
+    Get server pdisks status
+    """
+    oob_method = 'controllers_status'

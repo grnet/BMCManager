@@ -13,13 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+from bmcmanager.commands.base import BMCManagerServerCommand
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+
+class Run(BMCManagerServerCommand):
+    """
+    Run ipmitool
+    """
+    oob_method = 'ipmitool'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('args', default=[], nargs='*')
+        return parser

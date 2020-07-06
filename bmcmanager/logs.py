@@ -13,13 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+import logging
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+log = logging.getLogger('bmcmanager')

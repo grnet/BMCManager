@@ -13,12 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections import defaultdict
 from datetime import datetime
 import json
-import logging
 import urllib
 
+from bmcmanager.logs import log
 from bmcmanager.firmwares.base import LatestFirmwareFetcher
 
 
@@ -49,19 +48,19 @@ class LenovoBase(LatestFirmwareFetcher):
     def get(self):
         url = LENOVO_URL.format(self.model_name, self.device_name)
         try:
-            logging.debug('GET {}'.format(url))
+            log.debug('GET {}'.format(url))
             response = json.loads(urllib.request.urlopen(url).read())
             items = response['body']['DownloadItems']
         except (json.JSONDecodeError, urllib.error.URLError) as e:
-            logging.error('Could not fetch URL: {}'.format(e))
+            log.error('Could not fetch URL: {}'.format(e))
             return {}, []
         except KeyError as e:
-            logging.error('Invalid data format: {}'.format(e))
+            log.error('Invalid data format: {}'.format(e))
             return {}, []
 
         tracked_firmware = {**TRACKED_FIRMWARE, **self.extra_firmware}
 
-        result = defaultdict(lambda: [])
+        result = []
         downloads = []
         for item in items:
             try:
@@ -75,7 +74,8 @@ class LenovoBase(LatestFirmwareFetcher):
                 downloads.append(fw['URL'])
 
                 timestamp = datetime.fromtimestamp(fw['Date']['Unix'] / 1000)
-                result[component].append({
+                result.append({
+                    'component': component,
                     'name': item['Title'],
                     'version': item['SummaryInfo']['Version'],
                     'date': str(timestamp),
@@ -83,10 +83,10 @@ class LenovoBase(LatestFirmwareFetcher):
                 })
 
             except ValueError as e:
-                logging.error('Invalid data format: {}'.format(e))
+                log.error('Invalid data format: {}'.format(e))
 
             except KeyError as e:
-                logging.error('Missing information: {}'.format(e))
+                log.error('Missing information: {}'.format(e))
 
         return result, downloads
 

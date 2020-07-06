@@ -13,13 +13,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+from bmcmanager.commands.base import BMCManagerServerCommand
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+
+class DCIM(BMCManagerServerCommand):
+    """
+    Open DCIM
+    """
+    dcim_fetch_secrets = False
+    oob_method = 'open_dcim'
+
+
+class Web(BMCManagerServerCommand):
+    """
+    Open IPMI Web interface
+    """
+    oob_method = 'open'
+    dcim_fetch_secrets = False
+
+
+class Console(BMCManagerServerCommand):
+    """
+    Open Console
+    """
+    oob_method = 'console'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('--print-cmd', action='store_true', default=False)
+        return parser

@@ -15,8 +15,5 @@
 
 
 class LatestFirmwareFetcher:
-    def __init__(self, oob_params):
-        self.oob_params = oob_params
-
     def get(self):
         raise NotImplementedError

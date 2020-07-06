@@ -13,13 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.oob.lenovo import Lenovo
-from bmcmanager.oob.dell import Dell
-from bmcmanager.oob.fujitsu import Fujitsu
+from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerListCommand
 
-OOBS = {
-    'lenovo': Lenovo,
-    'dell': Dell,
-    'dell-inc': Dell,
-    'fujitsu': Fujitsu,
-}
+
+class Get(BMCManagerServerListCommand):
+    """
+    Retrieve attached disks
+    """
+    oob_method = 'get_disks'
+
+
+class Check(BMCManagerServerCommand):
+    """
+    Nagios check for attached disks
+    """
+    oob_method = 'check_disks'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('--expected', type=int, default=None)
+        return parser
