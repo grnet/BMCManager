@@ -104,7 +104,7 @@ password = <password>
 ; set `netbox_token` and `session_key` above for this to work.
 ; If no secret is available, then `username` and `password` defined above will
 ; be used instead.
-credentials = <dcim_secret_name_for_credentials>
+credentials = <secret_role>
 
 ; [optional] Configure NFS share and HTTP share (used by some commands)
 nfs_share = "IP:/path/"
