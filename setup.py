@@ -120,6 +120,7 @@ def setup_package():
         },
         install_requires=[
             'bs4',
+            'cliff',
             'paramiko',
             'requests',
         ],
