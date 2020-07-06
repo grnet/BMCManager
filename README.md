@@ -231,5 +231,5 @@ $ bmcmanager        # pressing tab should show available commands
 
 Or add the auto-completion script under `/etc/bash_completion.d/bmcmanager`, so that it is loaded automatically by `bash`:
 ```bash
-$ bmcmanager complete | sudo tee /etc/bash_completion.d/bmcmanager
+$ echo ". <($(which bmcmanager) complete)" | sudo tee /etc/bash_completion.d/bmcmanager
 ```
