@@ -1,4 +1,4 @@
-FROM python:3.6-slim-buster
+FROM docker.io/python:3.6-slim-buster
 
 ARG REPO=git+git://github.com/grnet/bmcmanager.git
 ARG BRANCH=master
