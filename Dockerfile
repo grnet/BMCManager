@@ -10,4 +10,5 @@ RUN apt-get update && \
         freeipmi && \
     rm -rf /var/lib/apt/lists && \
     pip install --no-cache-dir ${REPO}@${BRANCH} && \
-    apt-get purge git -y
+    apt-get purge git -y && \
+    apt-get autoremove -y
