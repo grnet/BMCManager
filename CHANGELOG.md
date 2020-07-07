@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Print possible commands when an invalid command is used.
 - Documentation examples.
 - Documentation for extending `bmcmanager` with new features.
+- Reduced Docker image size.
 
 ### Changed
 
