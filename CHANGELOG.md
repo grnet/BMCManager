@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Documentation examples.
 - Documentation for extending `bmcmanager` with new features.
 - Reduced Docker image size.
+- `bmcmanager server list` command, to list available servers.
 
 ### Changed
 
