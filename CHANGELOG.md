@@ -28,6 +28,7 @@ All notable changes to this project are documented in this file.
 
 - Improved log message levels so that no sensitive data is printed unless debugging.
 - Command-line arguments handling.
+- Show a helpful error message when no DCIM has been configured.
 
 
 ## [v0.2] (2020-07-05)

@@ -29,6 +29,8 @@ from bmcmanager.errors import BMCManagerError
 from bmcmanager.logs import log
 from bmcmanager import exitcode
 
+README = 'https://github.com/grnet/BMCManager/blob/master/README.md'
+
 
 def int_in_range_argument(itt):
     """
@@ -91,6 +93,12 @@ def get_dcim(args, config):
     """
     Get a configured DCIM from arguments and configuration
     """
+    if args.dcim not in DCIMS:
+        raise RuntimeError(
+            'Unsupported DCIM "{}", see {}'.format(args.dcim, README))
+    if args.dcim not in config:
+        raise RuntimeError(
+            'No configuration for DCIM "{}", see {}'.format(args.dcim, README))
     return DCIMS[args.dcim](args, config[args.dcim])
 
 
