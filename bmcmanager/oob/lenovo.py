@@ -82,22 +82,25 @@ class Lenovo(OobBase):
         }
 
     def _parse_response(self, text):
+        """
+        Parse response and return (list of results, retryable)
+        """
         try:
             start = text.find('[')
             end = text.rfind(']')
             results = eval(text[start:end + 1])
 
             # drop empty '{}' objects from list of responses
-            return [r for r in results if r]
+            return [r for r in results if r], False
 
         except (SyntaxError, TypeError, ValueError):
             if 'session_expired.html' in text:
                 log.critical('Failed due to expired session')
+                return [], True
             else:
                 log.critical('Could not parse response text')
                 log.debug('Response was:\n{}'.format(text))
-
-            return []
+                return [], False
 
     def _connect(self):
         ipmi_host = self.oob_info['ipmi']
@@ -109,14 +112,25 @@ class Lenovo(OobBase):
 
         self._session = requests.session()
 
-        text = self._post(url, data, cookies, headers).text
-        parsed = self._parse_response(text)[0]
-        session_token = parsed['SESSION_COOKIE']
-        if session_token == 'Failure_Session_Creation':
-            sys.stderr.write('Probably reached session limit')
+        for count in range(5):
+            text = self._post(url, data, cookies, headers).text
+            parsed, retryable = self._parse_response(text)
+            if not parsed and retryable and count < 4:
+                log.info('Will retry after {} seconds'.format(count))
+                time.sleep(count)
+            else:
+                break
+
+        if not parsed:
+            log.error('Failed to create session')
             sys.exit(10)
 
-        CSRF_token = parsed['CSRFTOKEN']
+        session_token = parsed[0]['SESSION_COOKIE']
+        if session_token == 'Failure_Session_Creation':
+            log.error('Probably reached session limit')
+            sys.exit(10)
+
+        CSRF_token = parsed[0]['CSRFTOKEN']
 
         self.session_token = {'SessionCookie': session_token}
         self.CSRF_token = {'CSRFTOKEN': CSRF_token}
@@ -217,7 +231,8 @@ class Lenovo(OobBase):
                 item, response.status_code))
             return []
 
-        return self._parse_response(response.text)
+        resp, _ = self._parse_response(response.text)
+        return resp
 
     def _get_disks(self):
         return self._get_rpc('gethddinfo', 'disks')

@@ -29,6 +29,7 @@ All notable changes to this project are documented in this file.
 
 - Improved log message levels so that no sensitive data is printed unless debugging.
 - Command-line arguments handling.
+- Try to recover from expired session errors.
 
 
 ## [v0.2] (2020-07-05)
