@@ -116,6 +116,7 @@ def setup_package():
                 'server upgrade = bmcmanager.commands.server.server:Upgrade',
                 'server ssh = bmcmanager.commands.server.server:SSH',
                 'server jobs flush = bmcmanager.commands.server.server:FlushJobs',
+                'server list = bmcmanager.commands.server.list:List',
             ]
         },
         install_requires=[

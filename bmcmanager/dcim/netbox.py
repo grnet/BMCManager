@@ -101,6 +101,7 @@ class Netbox(DcimBase):
         log.debug('Querying the Netbox API for {}'.format(self.identifier))
         url = os.path.join(self.api_url, 'api/dcim/devices/')
         params = self._get_params()
+        params['limit'] = 0
         json_response = self._do_request(url, params)
         log.debug('Decoding the response')
         # we expect the response to be a json object
@@ -118,6 +119,8 @@ class Netbox(DcimBase):
             'bios': result['custom_fields']['BIOS'],
             'tsm': result['custom_fields']['TSM'],
             'psu': result['custom_fields']['PSU'],
+            'site': result['site']['name'],
+            'status': result['status']['label'],
         }
 
     def get_info(self):
