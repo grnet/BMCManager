@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file.
 - Print possible commands when an invalid command is used.
 - Documentation examples.
 - Documentation for extending `bmcmanager` with new features.
+- Reduced Docker image size.
 
 ### Changed
 
@@ -29,6 +30,7 @@ All notable changes to this project are documented in this file.
 - Improved log message levels so that no sensitive data is printed unless debugging.
 - Command-line arguments handling.
 - Show a helpful error message when no DCIM has been configured.
+- Try to recover from expired session errors.
 
 
 ## [v0.2] (2020-07-05)
