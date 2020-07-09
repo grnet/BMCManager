@@ -92,6 +92,8 @@ device_type_ids = <id1>, <id2>, ...
 ; Only if using NetBox secrets for IPMI credentials
 netbox_token = <netbox_api_token>
 session_key = <netbox_session_key>
+; [Optional] Timeout when connecting to NetBox (in seconds).
+timeout = 10
 
 ;; Configuration of "lenovo" OOB
 [lenovo]

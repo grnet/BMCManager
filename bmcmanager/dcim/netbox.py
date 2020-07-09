@@ -27,6 +27,13 @@ class Netbox(DcimBase):
     def __init__(self, args, config):
         super(Netbox, self).__init__(args, config)
 
+        self.timeout = 10
+        try:
+            timeout = self.dcim_params.get('timeout', self.timeout)
+            self.timeout = int(timeout)
+        except (TypeError, ValueError):
+            log.warning('Ignoring invalid timeout: {}'.format(timeout))
+
         self.device_type_ids = None
         raw_ids = self.dcim_params.get('device_type_id')
         if raw_ids is not None:
@@ -89,7 +96,7 @@ class Netbox(DcimBase):
             method.upper(), url, str(params), str(headers)))
         try:
             f = getattr(requests, method)
-            return f(url, params=params, headers=headers, timeout=5)
+            return f(url, params=params, headers=headers, timeout=self.timeout)
         except (
             requests.exceptions.Timeout,
             requests.exceptions.ConnectionError):
