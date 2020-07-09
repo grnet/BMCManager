@@ -21,19 +21,23 @@ from bmcmanager.commands.base import (
 
 class Get(BMCManagerServerGetCommand):
     """
-    Retrieve IPMI credentials
+    print IPMI credentials
     """
     oob_method = 'creds'
 
 
 class Set(BMCManagerServerCommand):
     """
-    Change user IPMI password
+    change user IPMI password
     """
     oob_method = 'set_ipmi_password'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--secret-role', type=str, required=False)
-        parser.add_argument('--new-password', type=str, required=True)
+        parser.add_argument(
+            '--secret-role', type=str, required=False,
+            help='set the password as a NetBox secret with this role')
+        parser.add_argument(
+            '--new-password', type=str, required=True,
+            help='new IPMI password')
         return parser

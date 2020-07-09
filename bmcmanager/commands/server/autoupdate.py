@@ -18,13 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand
 
 class Enable(BMCManagerServerCommand):
     """
-    Enable server autoupdate
+    enable server autoupdate
     """
     oob_method = 'autoupdate'
 
 
 class Disable(BMCManagerServerCommand):
     """
-    Disable server autoupdate
+    disable server autoupdate
     """
     oob_method = 'clear-autoupdate'

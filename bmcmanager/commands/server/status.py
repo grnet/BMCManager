@@ -18,27 +18,27 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerGe
 
 class Get(BMCManagerServerGetCommand):
     """
-    Print server status
+    print server status
     """
     oob_method = 'status'
 
 
 class Storage(BMCManagerServerCommand):
     """
-    Print server storage status
+    print server storage status
     """
     oob_method = 'storage_status'
 
 
 class Controllers(BMCManagerServerCommand):
     """
-    Print server controllers status
+    print server controllers status
     """
     oob_method = 'controllers_status'
 
 
 class PDisks(BMCManagerServerCommand):
     """
-    Get server pdisks status
+    print server pdisks status
     """
     oob_method = 'controllers_status'

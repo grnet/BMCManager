@@ -115,20 +115,22 @@ LENOVO_RPCS = [
 
 class Do(BMCManagerServerListCommand):
     """
-    Execute a Lenovo RPC
+    execute an RPC call [Lenovo]
     """
     oob_method = 'lenovo_rpc'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--rpc', required=True)
+        parser.add_argument(
+            '--rpc', required=True,
+            help='name of RPC to execute, see `bmcmanager lenovo rpc list`')
         parser.add_argument('--params', type=json_argument, default={})
         return parser
 
 
 class List(Lister):
     """
-    List known Lenovo RPC calls
+    print known RPC calls [Lenovo]
     """
     def take_action(self, parsed_args):
         return LENOVO_RPC_COLUMNS, LENOVO_RPCS

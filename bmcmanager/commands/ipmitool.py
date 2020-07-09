@@ -18,11 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand
 
 class Run(BMCManagerServerCommand):
     """
-    Run ipmitool
+    execute a raw ipmitool command
     """
     oob_method = 'ipmitool'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('args', default=[], nargs='*')
+        parser.add_argument(
+            'args', default=[], nargs='*',
+            help='ipmitool command to execute')
         return parser

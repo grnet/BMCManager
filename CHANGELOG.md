@@ -32,6 +32,7 @@ All notable changes to this project are documented in this file.
 - Command-line arguments handling.
 - Show a helpful error message when no DCIM has been configured.
 - Try to recover from expired session errors.
+- Homogenous argument and command help messages.
 
 
 ## [v0.2] (2020-07-05)

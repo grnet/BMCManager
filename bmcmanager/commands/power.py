@@ -18,54 +18,58 @@ from bmcmanager.commands.base import BMCManagerServerCommand
 
 class PowerOn(BMCManagerServerCommand):
     """
-    Power on server
+    power on server
     """
     oob_method = 'power_on'
 
 
 class PowerOff(BMCManagerServerCommand):
     """
-    Power off server
+    power off server
     """
     oob_method = 'power_off'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--force', action='store_true', default=False)
-        parser.add_argument('--wait', action='store_true', default=False)
+        parser.add_argument(
+            '--force', action='store_true', default=False,
+            help='force power off the server')
+        parser.add_argument(
+            '--wait', action='store_true', default=False,
+            help='wait for server to power off')
         return parser
 
 
 class PowerCycle(BMCManagerServerCommand):
     """
-    Power cycle server
+    power cycle server
     """
     oob_method = 'power_cycle'
 
 
 class PowerReset(BMCManagerServerCommand):
     """
-    Power reset
+    power reset
     """
     oob_method = 'power_reset'
 
 
 class PowerStatus(BMCManagerServerCommand):
     """
-    Get server power status
+    print server power status
     """
     oob_method = 'power_status'
 
 
 class LockSwitch(BMCManagerServerCommand):
     """
-    Lock power switch
+    lock power switch
     """
     oob_method = 'lock_power_switch'
 
 
 class UnlockSwitch(BMCManagerServerCommand):
     """
-    Unlock power switch
+    unlock power switch
     """
     oob_method = 'unlock_power_switch'

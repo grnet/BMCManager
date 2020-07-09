@@ -18,13 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerLi
 
 class Get(BMCManagerServerListCommand):
     """
-    Retrieve IPMI sensor readings
+    print IPMI sensor readings
     """
     oob_method = 'ipmi_sensors'
 
 
 class Check(BMCManagerServerCommand):
     """
-    Nagios check for IPMI sensor readings
+    check IPMI sensor readings [Nagios]
     """
     oob_method = 'check_ipmi'

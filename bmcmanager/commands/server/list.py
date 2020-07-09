@@ -19,7 +19,7 @@ from bmcmanager.commands.base import (
 
 class List(BMCManagerServerListCommand):
     """
-    Print list of available servers
+    print list of available servers
     """
     columns = [
         'id', 'name', 'site', 'serial', 'manufacturer', 'device_type', 'status']

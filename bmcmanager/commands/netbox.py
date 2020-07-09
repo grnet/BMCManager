@@ -18,7 +18,7 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerLi
 
 class ListSecrets(BMCManagerServerListCommand):
     """
-    List available secrets from NetBox
+    print available secrets from NetBox
     """
     dcim_fetch_secrets = False
     oob_method = 'get_secrets'
@@ -26,14 +26,20 @@ class ListSecrets(BMCManagerServerListCommand):
 
 class SetSecret(BMCManagerServerCommand):
     """
-    Set a secret on NetBox
+    set a secret on NetBox
     """
     dcim_fetch_secrets = False
     oob_method = 'set_secret'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--secret-role', type=str, required=True)
-        parser.add_argument('--secret-name', type=str, required=True)
-        parser.add_argument('--secret-plaintext', type=str, required=True)
+        parser.add_argument(
+            '--secret-role', type=str, required=True,
+            help='role for the new NetBox secret')
+        parser.add_argument(
+            '--secret-name', type=str, required=True,
+            help='name for the new NetBox secret')
+        parser.add_argument(
+            '--secret-plaintext', type=str, required=True,
+            help='secret value for the NetBox secret, as plaintext')
         return parser

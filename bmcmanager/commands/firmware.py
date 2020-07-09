@@ -32,21 +32,21 @@ from bmcmanager.firmwares import firmware_fetchers
 
 class Get(BMCManagerServerListCommand):
     """
-    Retrieve server firmware
+    print server firmware versions
     """
     oob_method = 'get_firmware'
 
 
 class Refresh(BMCManagerServerCommand):
     """
-    Refresh server firmware on DCIM
+    update server firmware information on DCIM
     """
     oob_method = 'refresh_firmware'
 
 
 class Check(BMCManagerServerCommand):
     """
-    Nagios check for server firmware version
+    check server firmware version [Nagios]
     """
     oob_method = 'check_firmware'
     dcim_fetch_secrets = False
@@ -54,47 +54,62 @@ class Check(BMCManagerServerCommand):
 
 class UpgradeRPC(BMCManagerServerCommand):
     """
-    Upgrade server firmware using RPC calls
+    perform firmware upgrade using RPC
     """
     oob_method = 'firmware_upgrade_rpc'
     all_stages = range(1, 11)
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--timeout', type=int, default=60)
-        parser.add_argument('--handle', type=int, default=None)
         parser.add_argument(
-            '--bundle', required=True, type=argparse.FileType('rb'))
+            '--timeout', type=int, default=60,
+            help='advanced; seconds before failing because of timeout')
+        parser.add_argument(
+            '--handle', type=int, default=None,
+            help='advanced; Use this handle for upgrade [Lenovo]')
+        parser.add_argument(
+            '--bundle', required=True, type=argparse.FileType('rb'),
+            help='Bundle file to use for firmware upgrade')
         parser.add_argument(
             '--stages', nargs='+', default=self.all_stages,
-            type=int_in_range_argument(self.all_stages))
+            type=int_in_range_argument(self.all_stages),
+            help='advanced; Only perform specific upgrade stages [Lenovo]')
 
         return parser
 
 
 class UpgradeOsput(BMCManagerServerCommand):
     """
-    Upgrade server firmware using osput (Lenovo)
+    perform firmware upgrade using osput [Lenovo]
     """
     oob_method = 'firmware_upgrade_osput'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--osput', type=str, default='osput')
-        parser.add_argument('--bundle', type=str, required=True)
+        parser.add_argument(
+            '--osput', type=str, default='osput',
+            help='override path to the `osput` executable [lenovo]')
+        parser.add_argument(
+            '--bundle', type=str, required=True,
+            help='bundle file to use for firmware upgrade')
         return parser
 
 
 class Latest(Lister):
     """
-    Print latest firmware versions and download bundles
+    print and download latest firmware version bundles
     """
-
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('model', choices=firmware_fetchers.keys())
-        parser.add_argument('--download-to')
-        parser.add_argument('--innoextract', action='store_true')
+        parser.add_argument(
+            'model', choices=firmware_fetchers.keys(),
+            help='server model for which to look for new firwmare')
+        parser.add_argument(
+            '--download-to',
+            help='download available firmware files to this location')
+        parser.add_argument(
+            '--innoextract', action='store_true',
+            help='extract `.exe` files using innoextract')
         return parser
 
     def _execute_cmd(self, command):

@@ -18,11 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand
 
 class Reset(BMCManagerServerCommand):
     """
-    Reset IPMI
+    reset IPMI
     """
     oob_method = 'ipmi_reset'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--force', action='store_true', default=False)
+        parser.add_argument(
+            '--force', action='store_true', default=False,
+            help='force reset')
         return parser

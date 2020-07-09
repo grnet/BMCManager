@@ -62,7 +62,7 @@ def base_arguments(parser):
     """
     parser.add_argument(
         '--config-file',
-        help='Configuration file path',
+        help='configuration file path',
         default=''
     )
 
@@ -73,17 +73,17 @@ def server_arguments(parser):
     """
     parser.add_argument(
         'server',
-        help='Server name'
+        help='server name'
     )
     parser.add_argument(
         '-d', '--dcim',
-        help='DCIM name',
+        help='name of DCIM to use',
         choices=['netbox'],
-        default='netbox'
+        default='netbox',
     )
     parser.add_argument(
         '-t', '--type',
-        help='Server type',
+        help='unit type',
         choices=['name', 'rack', 'rack-unit', 'serial'],
         default='search'
     )
@@ -160,7 +160,7 @@ def bmcmanager_take_action(cmd, parsed_args):
 
 class BMCManagerServerCommand(Command):
     """
-    Base command for working with a server
+    base command for working with a server
     """
     dcim_fetch_secrets = True
 
@@ -180,7 +180,7 @@ class BMCManagerServerCommand(Command):
 
 class BMCManagerServerGetCommand(ShowOne):
     """
-    Base command for retrieving information for a server
+    base command for retrieving information for a server
     """
     dcim_fetch_secrets = True
 
@@ -199,7 +199,7 @@ class BMCManagerServerGetCommand(ShowOne):
 
 class BMCManagerServerListCommand(Lister):
     """
-    Base command for retrieving a list of information for a server
+    base command for retrieving a list of information for a server
     """
     dcim_fetch_secrets = True
 

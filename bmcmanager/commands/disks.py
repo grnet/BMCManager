@@ -18,18 +18,20 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerLi
 
 class Get(BMCManagerServerListCommand):
     """
-    Retrieve attached disks
+    print attached disks
     """
     oob_method = 'get_disks'
 
 
 class Check(BMCManagerServerCommand):
     """
-    Nagios check for attached disks
+    check attached disks [Nagios]
     """
     oob_method = 'check_disks'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--expected', type=int, default=None)
+        parser.add_argument(
+            '--expected', type=int, default=None,
+            help='number of healthy disks the server must have')
         return parser

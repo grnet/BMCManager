@@ -18,13 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand
 
 class Local(BMCManagerServerCommand):
     """
-    Boot server from local disk
+    boot server from local disk
     """
     oob_method = 'boot_local'
 
 
 class PXE(BMCManagerServerCommand):
     """
-    Boot server with PXE
+    boot server with PXE
     """
     oob_method = 'boot_pxe'

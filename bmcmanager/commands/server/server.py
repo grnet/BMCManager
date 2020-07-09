@@ -18,60 +18,66 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerGe
 
 class SSH(BMCManagerServerCommand):
     """
-    SSH into server
+    connect to server with SSH
     """
     oob_method = 'ssh'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--wait', action='store_true', default=False)
+        parser.add_argument(
+            '--wait', action='store_true', default=False,
+            help='wait for server to turn on before starting SSH shell')
         return parser
 
 
 class FlushJobs(BMCManagerServerCommand):
     """
-    Flush server pending jobs
+    flush server pending jobs
     """
     oob_method = 'flush_jobs'
 
 
 class Identify(BMCManagerServerCommand):
     """
-    Turn on/off server identifier LED
+    turn server identifier LED on/off
     """
     oob_method = 'identify'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         group = parser.add_mutually_exclusive_group()
-        group.add_argument('--on', nargs='?', type=int, default=15)
-        group.add_argument('--off', action='store_true', default=False)
+        group.add_argument(
+            '--on', nargs='?', type=int, default=15,
+            help='turn on identifier LED')
+        group.add_argument(
+            '--off', action='store_true', default=False,
+            help='turn off identifier LED')
         return parser
 
 
 class Diagnostics(BMCManagerServerCommand):
     """
-    Print server diagnostics
+    print server diagnostics
     """
     oob_method = 'diagnostics'
 
 
 class Info(BMCManagerServerGetCommand):
     """
-    Print server info
+    print server info
     """
     oob_method = 'info'
 
 
 class Upgrade(BMCManagerServerCommand):
     """
-    Upgrade server
+    upgrade server
     """
     oob_method = 'upgrade'
 
 
 class IdracInfo(BMCManagerServerCommand):
     """
-    Show idrac info
+    print idrac info
     """
     oob_method = 'idrac_info'

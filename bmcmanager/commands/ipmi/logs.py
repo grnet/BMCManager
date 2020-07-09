@@ -18,11 +18,13 @@ from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerLi
 
 class Get(BMCManagerServerListCommand):
     """
-    Retrieve system event logs
+    print system event logs
     """
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('--analysed', action='store_true', default=False)
+        parser.add_argument(
+            '--analysed', action='store_true', default=False,
+            help='decode OEM specific fields')
         return parser
 
     def action(self, oob):
@@ -34,12 +36,13 @@ class Get(BMCManagerServerListCommand):
 
 class Clear(BMCManagerServerCommand):
     """
-    Clear system event logs
+    clear system event logs
     """
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--from-firmware-upgrades', action='store_true', default=False)
+            '--from-firmware-upgrades', action='store_true', default=False,
+            help='clear logs from firmware upgrades only')
         return parser
 
     def action(self, oob):
