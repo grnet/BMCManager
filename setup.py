@@ -54,7 +54,8 @@ def setup_package():
         version=get_version(),
         description='bmcmanager tool - CloudEng Team fork',
         long_description=get_file('README.md'),
-        url='',
+        long_description_content_type='text/markdown',
+        url='https://github.com/grnet/BMCManager.git',
         packages=find_packages(),
         entry_points={
             'console_scripts': [

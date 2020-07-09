@@ -212,7 +212,7 @@ $ bmcmanager <command-name> <server-name>
 The server selection arguments are:
 
 | Parameter        | Type                               | Default  | Description                                                                            |
-| ---------------- | ---------------------------------- | -------- |
+| ---------------- | ---------------------------------- | -------- | -------------------------------------------------------------------------------------- |
 | `<server-name>`  | String                             | -        | Search NetBox for `<server-name>` and execute command on all matching devices          |
 | `-d/--dcim DCIM` | String                             | `netbox` | Use a different `DCIM`. Requires a separate `[DCIM]` section on the configuration file |
 | `-t/--type TYPE` | `name`/`rack`/`rack-unit`/`serial` | `name`   | Specifically match a rack, a rack unit, a serial number, or search by name             |

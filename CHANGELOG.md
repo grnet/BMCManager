@@ -6,6 +6,15 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+
+## [v1.0] (2020-07-09)
+
+### Added
+
 - Bash auto completion.
 - Get and list commands now support multiple output formats.
 - Interactive mode.
