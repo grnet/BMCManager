@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Support for new DCIM `direct` (Use server IPMI address directly).
+
 ### Changed
 
 ### Fixed

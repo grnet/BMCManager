@@ -27,6 +27,8 @@ class Netbox(DcimBase):
     def __init__(self, args, config):
         super(Netbox, self).__init__(args, config)
 
+        self.api_url = config['api_url']
+
         self.timeout = 10
         try:
             timeout = self.dcim_params.get('timeout', self.timeout)

@@ -78,7 +78,7 @@ def server_arguments(parser):
     parser.add_argument(
         '-d', '--dcim',
         help='name of DCIM to use',
-        choices=['netbox'],
+        choices=DCIMS.keys(),
         default='netbox',
     )
     parser.add_argument(

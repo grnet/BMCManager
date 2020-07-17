@@ -14,7 +14,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from bmcmanager.dcim.netbox import Netbox
+from bmcmanager.dcim.direct import Direct
 
 DCIMS = {
-    'netbox': Netbox
+    'netbox': Netbox,
+    'direct': Direct,
 }

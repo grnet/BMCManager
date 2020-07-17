@@ -23,7 +23,6 @@ class DcimBase(object):
         self.config = config
         self.identifier = args.server
         self.dcim_params = config
-        self.api_url = config['api_url']
         self.is_rack = self.args.type == 'rack'
         self.is_rack_unit = self.args.type == 'rack-unit'
         self.is_serial = self.args.type == 'serial'
@@ -38,7 +37,7 @@ class DcimBase(object):
         raise NotImplementedError
 
     def supports_secrets(self):
-        return getattr(self, 'get_secret') is not None
+        return hasattr(self, 'get_secret')
 
     def set_custom_fields(self, oob_info, custom_fields):
         return False
