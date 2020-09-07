@@ -10,7 +10,13 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+
+## [v1.0.1] (2020-09-07)
+
+### Fixed
+
 - Compare versions as tuples instead of strings if possible when checking for firmware upgrades.
+
 
 ## [v1.0] (2020-07-09)
 
