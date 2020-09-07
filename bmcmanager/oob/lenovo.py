@@ -29,6 +29,8 @@ from bmcmanager.oob.base import OobBase
 from bmcmanager.logs import log
 from bmcmanager import nagios
 
+from bmcmanager.utils.firmware import version_tuple
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DISK_TYPE = {
@@ -450,8 +452,14 @@ class Lenovo(OobBase):
             r = self._get_rpc('getimageinfo')
             log.debug(r)
 
-            to_update = next((
-                x for x in r if x['NEWIMG_VER'] > x['CURIMG_VER']), None)
+            def has_update(x):
+                new, cur = x['NEWIMG_VER'], x['CURIMG_VER']
+                try:
+                    return version_tuple(new) > version_tuple(cur)
+                except (TypeError, ValueError):
+                    return new > cur
+
+            to_update = next(filter(has_update, r), None)
             if to_update is None:
                 log.info('No updates available')
                 return
