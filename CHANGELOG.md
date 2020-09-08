@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+- When a command failed, sometimes a successful return code (0) was returned, along with a false "No servers found" message.
+
 
 ## [v1.0.1] (2020-09-07)
 
