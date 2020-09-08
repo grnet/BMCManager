@@ -138,7 +138,8 @@ def bmcmanager_take_action(cmd, parsed_args):
     cmd.config = get_config(parsed_args.config_file)
     dcim = get_dcim(parsed_args, cmd.config)
 
-    for oob_info in dcim.get_oobs():
+    idx = None
+    for idx, oob_info in enumerate(dcim.get_oobs()):
         oob_config = get_oob_config(cmd.config, dcim, oob_info)
         log.debug('Creating OOB object for {}'.format(oob_info['oob']))
         try:
@@ -153,7 +154,8 @@ def bmcmanager_take_action(cmd, parsed_args):
                 return cmd.action(oob)
         except Exception as e:
             log.exception('Unhandled exception: {}'.format(e))
-    else:
+
+    if idx is None:
         log.fatal('No servers found for "{}"'.format(parsed_args.server))
         return [], []
 
