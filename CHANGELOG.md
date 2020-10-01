@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- `bmcmanager firmware latest check --after YYYY-MM-DD` command, to check whether new firmware versions have been released after a specific date.
+
 ### Changed
 
 ### Fixed

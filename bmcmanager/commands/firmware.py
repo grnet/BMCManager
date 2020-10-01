@@ -20,7 +20,9 @@ import urllib.request
 from subprocess import call, CalledProcessError
 
 from cliff.lister import Lister
+from cliff.command import Command
 
+from bmcmanager import nagios, exitcode
 from bmcmanager.commands.base import (
     BMCManagerServerCommand,
     BMCManagerServerListCommand,
@@ -95,7 +97,7 @@ class UpgradeOsput(BMCManagerServerCommand):
         return parser
 
 
-class Latest(Lister):
+class LatestGet(Lister):
     """
     print and download latest firmware version bundles
     """
@@ -158,3 +160,53 @@ class Latest(Lister):
                     'innoextract', file_name, '-d', parsed_args.download_to])
 
         return columns, values
+
+
+class LatestCheck(Command):
+    """
+    check for new firmware versions
+    """
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument(
+            'model', choices=firmware_fetchers.keys(),
+            help='server model for which to look for new firwmare')
+        parser.add_argument(
+            '--after', type=str, required=True,
+            help='check that there are no firmware releases after this date (YYYY-MM-DD)'
+        )
+        return parser
+
+    def take_action(self, parsed_args):
+        try:
+            fetcher = firmware_fetchers[parsed_args.model]
+
+        except KeyError as e:
+            log.error('Unsupported device type: {}'.format(e))
+            sys.exit(-1)
+
+        result, _ = fetcher().get()
+
+        new_firmware = []
+        for item in result:
+            if item['date'] > parsed_args.after:
+                new_firmware.append('- {} / {} / {} / {}'.format(
+                    item['date'],
+                    item['component'],
+                    item['version'],
+                    item['name'],
+                ))
+
+        if new_firmware:
+            state = nagios.CRITICAL
+            msg = '{} new firmware version releases since {}'.format(
+                len(new_firmware), parsed_args.after)
+        else:
+            state = nagios.OK
+            msg = 'No new firmware version releases since {}'.format(
+                parsed_args.after)
+
+        nagios.result(
+            state, msg, lines=new_firmware, pre='Firmware Versions')
+
+        sys.exit(exitcode.get())
