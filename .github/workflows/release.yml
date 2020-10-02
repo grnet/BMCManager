@@ -37,6 +37,8 @@ jobs:
         run: echo ${{ steps.docker_build.outputs.digest }}
       - name: Build python packages
         run: python setup.py bdist_wheel sdist
+        env:
+          BMCMANAGER_IGNORE_MISSING_BINARIES: 1
       - name: Publish on PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
