@@ -2,7 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [v1.0.2] (2020-10-02)
 
 ### Added
 

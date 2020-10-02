@@ -23,7 +23,7 @@ class BMCManagerApp(App):
     def __init__(self):
         super(BMCManagerApp, self).__init__(
             description='BMCManager',
-            version='1.0.1',
+            version='1.0.2',
             command_manager=CommandManager('bmcmanager.entrypoints'),
             deferred_help=True
         )
