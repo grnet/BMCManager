@@ -22,10 +22,19 @@ class List(BMCManagerServerListCommand):
     print list of available servers
     """
     columns = [
-        'id', 'name', 'site', 'serial', 'manufacturer', 'device_type', 'status']
+        'id',
+        'name',
+        'site',
+        'serial',
+        'manufacturer',
+        'device_type',
+        'status',
+        'ipmi',
+    ]
 
     def take_action(self, parsed_args):
         dcim = get_dcim(parsed_args, get_config(parsed_args.config_file))
-        values = [[o['info'][col] for col in self.columns] for o in dcim.get_oobs()]
+        values = [[o['info'][col]
+                   for col in self.columns] for o in dcim.get_oobs()]
 
         return self.columns, values
