@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- `bmcmanager server list` now also prints the server IPMI addresses.
+
 ### Changed
 
 ### Fixed
