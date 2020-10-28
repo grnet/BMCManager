@@ -6,6 +6,14 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v1.0.3] (2020-10-28)
+
+### Added
+
 - `bmcmanager server list` now also prints the server IPMI addresses.
 
 ### Changed
@@ -24,13 +32,11 @@ All notable changes to this project are documented in this file.
 
 - When a command failed, sometimes a successful return code (0) was returned, along with a false "No servers found" message.
 
-
 ## [v1.0.1] (2020-09-07)
 
 ### Fixed
 
 - Compare versions as tuples instead of strings if possible when checking for firmware upgrades.
-
 
 ## [v1.0] (2020-07-09)
 
@@ -65,7 +71,6 @@ All notable changes to this project are documented in this file.
 - Try to recover from expired session errors.
 - Homogenous argument and command help messages.
 
-
 ## [v0.2] (2020-07-05)
 
 Initial version as `bmcmanager`.
@@ -92,7 +97,6 @@ Initial version as `bmcmanager`.
 
 - Installation dependencies and instructions.
 - Linter warnings.
-
 
 ## [v0.1] (2020-04-13)
 
