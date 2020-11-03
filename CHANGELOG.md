@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- Switched to `pbr` for installation.
+
 ### Fixed
 
 ## [v1.0.3] (2020-10-28)
