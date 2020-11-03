@@ -45,9 +45,7 @@
 
 3. Install `bmcmanager`:
    ```bash
-   $ git clone https://github.com/grnet/bmcmanager.git
-   $ cd bmcmanager
-   $ pip3 install .
+   $ pip install bmcmanager
    $ bmcmanager --help
    ```
 
