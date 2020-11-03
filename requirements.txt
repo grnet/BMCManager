@@ -1,0 +1,4 @@
+bs4==0.0.1
+paramiko==2.7.1
+requests==2.24.0
+cliff==3.4.0
