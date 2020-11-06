@@ -45,9 +45,7 @@
 
 3. Install `bmcmanager`:
    ```bash
-   $ git clone https://github.com/grnet/bmcmanager.git
-   $ cd bmcmanager
-   $ pip3 install .
+   $ pip install bmcmanager
    $ bmcmanager --help
    ```
 
@@ -55,8 +53,12 @@
 
 1. You can install `bmcmanager` as a snap package:
    ```bash
-   $ sudo snap install bmcmanager
+   $ sudo snap install bmcmanager [--channel edge]
    ```
+
+Notes:
+
+- The `edge` channel always contains the latest successful `bmcmanager` build from the `master` branch.
 
 Snap Limitations:
 

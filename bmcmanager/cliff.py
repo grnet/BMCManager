@@ -18,12 +18,14 @@ import sys
 from cliff.app import App
 from cliff.commandmanager import CommandManager
 
+from bmcmanager.version import version_string
+
 
 class BMCManagerApp(App):
     def __init__(self):
         super(BMCManagerApp, self).__init__(
             description='BMCManager',
-            version='1.0.3',
+            version=version_string,
             command_manager=CommandManager('bmcmanager.entrypoints'),
             deferred_help=True
         )

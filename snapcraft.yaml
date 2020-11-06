@@ -12,8 +12,6 @@ parts:
     plugin: python
     python-version: python3
     source: .
-    build-environment:
-      - BMCMANAGER_IGNORE_MISSING_BINARIES: '1'
     stage-packages:
       - freeipmi
       - ipmitool
