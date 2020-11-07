@@ -76,8 +76,15 @@ class OobBase(object):
             raise OobError('Could not open browser {}'.format(
                 ' '.join(command)))
 
+    def _get_http_ipmi_host(self):
+        ipmi_host = self.oob_info['ipmi']
+        if not ipmi_host.startswith('http'):
+            ipmi_host = 'https://{}'.format(ipmi_host)
+
+        return ipmi_host
+
     def open(self):
-        self._execute_popen([BROWSER_OPEN, self.oob_info['ipmi']])
+        self._execute_popen([BROWSER_OPEN, self._get_http_ipmi_host()])
 
     def ssh(self):
         status_command = ['chassis', 'power', 'status']
