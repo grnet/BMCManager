@@ -105,8 +105,7 @@ class Lenovo(OobBase):
                 return [], False
 
     def _connect(self):
-        ipmi_host = self.oob_info['ipmi']
-        url = ipmi_host + self.URL_LOGIN
+        url = self._get_http_ipmi_host() + self.URL_LOGIN
 
         cookies = self._get_console_cookies()
         headers = self._get_console_headers()
@@ -148,10 +147,9 @@ class Lenovo(OobBase):
         )
 
     def console(self):
-
         self._connect()
 
-        ipmi = self.oob_info['ipmi']
+        ipmi = self._get_http_ipmi_host()
         url = ipmi + self.URL_VNC.format(ipmi.replace('https://', ''))
         answer = self._post(
             url, None, self.session_token, self.CSRF_token).text
@@ -224,7 +222,7 @@ class Lenovo(OobBase):
         if not hasattr(self, 'CSRF_token'):
             self._connect()
 
-        ipmi_host = self.oob_info['ipmi']
+        ipmi_host = self._get_http_ipmi_host()
         url = ipmi_host + '/rpc/{}.asp'.format(rpc)
         response = self._post(url, params, self.session_token, self.CSRF_token)
 
