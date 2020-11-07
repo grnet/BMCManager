@@ -206,6 +206,11 @@ Some configuration can be overriden using environment variables:
   $ bmcmanager ipmi credentials get lar0510
   ```
 
+- Activate SOL for a MaaS host:
+  ```bash
+  $ bmcmanager ipmi tool --dcim maas HOSTNAME sol activate
+  ```
+
 ## Usage
 
 Use `bmcmanager --help` for a list of available commands. Common command-line arguments for all supported commands are:
