@@ -361,7 +361,12 @@ class OobBase(object):
 
         perfdata = []
         cmd = self._ipmi_dcmi_cmd(host, self.username, self.password)
-        dcmi_output = self._execute_cmd(cmd, output=True)
+        try:
+            dcmi_output = self._execute_cmd(cmd, output=True)
+        except OobError:
+            nagios.result(nagios.UNKNOWN, 'ipmi-dcmi failed', pre=pre)
+            return
+
         match = re.findall(r'Current Power\s*:\s*(\d+)', dcmi_output)
         if match:
             perfdata.append("'Current Power'={}".format(match[0]))
@@ -369,7 +374,12 @@ class OobBase(object):
         sel_errors = list(self._get_sel_errors(host))
 
         cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
-        sensors = self._execute_cmd(cmd, output=True)
+        try:
+            sensors = self._execute_cmd(cmd, output=True)
+        except OobError:
+            nagios.result(nagios.UNKNOWN, 'ipmi-sensors failed', pre=pre)
+            return
+
         sensor_warnings = []
         sensor_errors = []
         for line in sensors.split('\n')[1:-1]:
