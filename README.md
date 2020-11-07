@@ -4,7 +4,7 @@
 
 [`bmcmanager`](https://github.com/grnet/bmcmanager.git) is a tool for performing operations on rack units. It originated as a [`rackops`](https://github.com/grnet/rackops.git) fork, but has since been re-written almost from scratch, offering lots of additional functionality, bug-fixes and all-around improvements.
 
-`bmcmanager` supports Lenovo, Dell and Fujitsu servers, and relies on [`NetBox`](https://netbox.readthedocs.io/en/stable/) for DCIM and IPAM.
+`bmcmanager` supports Lenovo, Dell and Fujitsu servers, and relies on [`NetBox`](https://netbox.readthedocs.io/en/stable/) for DCIM and IPAM. There is also expiremental support for [`MaaS`](https://maas.io).
 
 `bmcmanager` is released under the terms of the GPL-3.0 license.
 
@@ -22,6 +22,7 @@
 - Configure unique IPMI credentials per server, store them as NetBox secrets and retrieve them automatically from NetBox.
 - Bash auto-completion.
 - Supports multiple output formats supported.
+- (Expiremental) MaaS support. Match servers by hostname, and use MaaS IPMI credentials for all bmcmanager commands.
 
 ## Installation
 
@@ -96,6 +97,17 @@ netbox_token = <netbox_api_token>
 session_key = <netbox_session_key>
 ; [Optional] Timeout when connecting to NetBox (in seconds).
 timeout = 10
+
+;; Configure of "maas" DCIM. Only required if using MaaS [Expiremental].
+[maas]
+; Required. Example: https://maas.internal.deployment:5240/MAAS/api/2.0
+api_url = <maas_api_url>
+; Required. Generate from MaaS GUI > User > API Keys > Generate MAAS API key.
+; Example: AAAAAAAAAAA:BBBBBBBBBBBBBBB:CCCCCCCCCCCCCCCCC
+api_key = <maas_api_key>
+; Required for `bmcmanager open dcim` command. This is the root MaaS GUI URL.
+; Example: https://maas.internal.deployment/
+ui_url = <maas_ui_url>
 
 ;; Configuration of "lenovo" OOB
 [lenovo]
