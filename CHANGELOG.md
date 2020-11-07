@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 ### Changed
 
 - Switched to `pbr` for installation.
+- Build snap for `amd64` and `arm64` architectures.
 
 ### Fixed
 
