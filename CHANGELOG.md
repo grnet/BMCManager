@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file.
 ### Fixed
 
 - Crashes when the IPMI address was not prefixed with `http://` or `https://`.
+- `bmcmanager check sensor` command returned OK status when the underlying commands timed out.
 
 ## [v1.0.3] (2020-10-28)
 
