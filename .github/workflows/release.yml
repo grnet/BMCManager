@@ -53,15 +53,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: "${{ github.ref }}"
+          release_name: ${{ env.VERSION }}
           draft: true
           prerelease: ${{ contains(env.VERSION, 'rc') }}
           body: |
-            BMCManager ${{ github.ref }}
+            BMCManager ${{ env.VERSION }}
 
             ## Pip
 
-            - `pip install bmcmanager==${{ github.ref }}`
+            - `pip install bmcmanager==${{ env.VERSION }}`
 
             ## Snap
 
@@ -69,4 +69,4 @@ jobs:
 
             ## Docker Images
 
-            - `docker pull cloudeng/bmcmanager:${{ github.ref }}`
+            - `docker pull cloudeng/bmcmanager:${{ env.VERSION }}`
