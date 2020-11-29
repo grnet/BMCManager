@@ -46,7 +46,7 @@ jobs:
       - name: Build and check packages
         run: tox -e testpackages
       - name: Publish on PyPI
-        run: tox -e publish -u __token__ -p "${{ secrets.PYPI_TOKEN }}"
+        run: tox -e publish -- -u __token__ -p "${{ secrets.PYPI_TOKEN }}"
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
