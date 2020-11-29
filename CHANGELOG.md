@@ -8,6 +8,16 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+### Fixed
+
+## [v1.1.0](2020-11-29)
+
+### Added
+
+- Initial support for MaaS DCIM. See README.md for configuration and usage.
+
+### Changed
+
 - Switched to `pbr` for installation.
 - Build snap for `amd64` and `arm64` architectures.
 
