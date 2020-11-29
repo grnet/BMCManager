@@ -54,7 +54,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ env.VERSION }}
-          draft: true
+          draft: false
           prerelease: ${{ contains(env.VERSION, 'rc') }}
           body: |
             BMCManager ${{ env.VERSION }}
