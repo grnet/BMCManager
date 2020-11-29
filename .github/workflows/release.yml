@@ -59,6 +59,10 @@ jobs:
           body: |
             BMCManager ${{ env.VERSION }}
 
+            ## Changelog
+
+            - See [CHANGELOG.md](https://github.com/grnet/BMCManager/blob/${{ env.VERSION }}/CHANGELOG.md)
+
             ## Pip
 
             - `pip install bmcmanager`
