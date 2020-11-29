@@ -61,7 +61,7 @@ jobs:
 
             ## Pip
 
-            - `pip install bmcmanager==${{ env.VERSION }}`
+            - `pip install bmcmanager`
 
             ## Snap
 
