@@ -48,3 +48,26 @@ jobs:
       - name: Publish on PyPI
         run: tox -e publish -u __token__ -p "${{ secrets.PYPI_TOKEN }}"
         if: ${{ !contains(env.VERSION, 'rc') }}
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: "${{ github.ref }}"
+          draft: true
+          prerelease: ${{ contains(env.VERSION, 'rc') }}
+          body: |
+            BMCManager ${{ github.ref }}
+
+            ## Pip
+
+            - `pip install bmcmanager==${{ github.ref }}`
+
+            ## Snap
+
+            - `sudo snap install bmcmanager`
+
+            ## Docker Images
+
+            - `docker pull cloudeng/bmcmanager:${{ github.ref }}`
