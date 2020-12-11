@@ -526,3 +526,40 @@ class Lenovo(OobBase):
         values = [[r[col] for col in columns] for r in response]
 
         return columns, values
+
+    def factory_reset(self):
+        args = self.parsed_args
+        self._connect()
+        log.info('Setting preserve config')
+        r = self._get_rpc('setpreservecfg', params={
+            'PRSRV_CFG': '0,0,0,0,0,0,0,0,0,0,0,',
+            'PRSRV_CFG_CNT': '11',
+            'PRSRV_SELECT': '0,1,2,3,4,5,6,7,8,9,10,',
+        })
+        log.debug(r)
+
+        log.info('Starting factory reset')
+        r = self._get_rpc('setfactorydefaults')
+        log.debug(r)
+
+        log.info('Factory reset process started')
+        if args.wait:
+            begin = datetime.utcnow()
+            while datetime.utcnow() < begin + timedelta(minutes=args.timeout):
+                try:
+                    url = self._get_http_ipmi_host() + self.URL_VALIDATE
+
+                    answer = self._post(
+                        url, None, self.session_token, self.CSRF_token)
+                    if answer.status_code == 200:
+                        log.info('Done.')
+                        return
+                    log.debug(answer)
+                except (
+                    requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectionError,
+                    ConnectionResetError,
+                    BrokenPipeError):
+                    log.info('In progress')
+
+                time.sleep(10)

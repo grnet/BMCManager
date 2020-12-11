@@ -81,3 +81,20 @@ class IdracInfo(BMCManagerServerCommand):
     print idrac info
     """
     oob_method = 'idrac_info'
+
+
+class FactoryReset(BMCManagerServerCommand):
+    """
+    factory reset server
+    """
+    oob_method = 'factory_reset'
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument(
+            '--wait', action='store_true', default=False,
+            help='wait for factory reset operation to complete')
+        parser.add_argument(
+            '--timeout', type=int, default=60,
+            help='advanced; minutes before failing because of timeout')
+        return parser
