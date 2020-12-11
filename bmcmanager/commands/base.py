@@ -107,19 +107,21 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
     Get configuration for an OOB
     """
     oob_name = oob_info['oob'].lower()
-    cfg = {}
     try:
         oob_params = config[oob_name]
     except KeyError:
         raise BMCManagerError('Invalid OOB name {}'.format(oob_name))
 
+    cfg = {
+        'username': oob_params.get('username'),
+        'password': oob_params.get('password'),
+    }
     if get_secret and dcim.supports_secrets() and 'credentials' in oob_params:
         secret = dcim.get_secret(oob_params['credentials'], oob_info)
-        cfg['username'] = secret['name']
-        cfg['password'] = secret['plaintext']
-    else:
-        cfg['username'] = oob_params['username']
-        cfg['password'] = oob_params['password']
+        if secret['name']:
+            cfg['username'] = secret['name']
+        if secret['plaintext']:
+            cfg['password'] = secret['plaintext']
 
     cfg['username'] = os.getenv('BMCMANAGER_USERNAME', cfg['username'])
     cfg['password'] = os.getenv('BMCMANAGER_PASSWORD', cfg['password'])

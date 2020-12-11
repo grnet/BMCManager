@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+- Handling case where credentials on NetBox are not set.
+
 ## [v1.1.0](2020-11-29)
 
 ### Added
