@@ -529,6 +529,13 @@ class Lenovo(OobBase):
 
     def factory_reset(self):
         args = self.parsed_args
+
+        if not args.force:
+            response = input('Factory reset? [y/N] ')
+            if response != 'y':
+                log.info('Aborted')
+                return
+
         self._connect()
         log.info('Setting preserve config')
         r = self._get_rpc('setpreservecfg', params={

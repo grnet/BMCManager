@@ -97,4 +97,7 @@ class FactoryReset(BMCManagerServerCommand):
         parser.add_argument(
             '--timeout', type=int, default=60,
             help='advanced; minutes before failing because of timeout')
+        parser.add_argument(
+            '--force', action='store_true', default=False,
+            help='do not ask for user input')
         return parser
