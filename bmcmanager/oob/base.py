@@ -44,6 +44,7 @@ class OobBase(object):
     Base OOB class
     """
     URL_LOGIN = '/rpc/WEBSES/create.asp'
+    URL_VALIDATE = '/rpc/WEBSES/validate.asp'
     URL_VNC = '/Java/jviewer.jnlp?EXTRNIP={}&JNLPSTR=JViewer'
 
     def __init__(self, parsed_args, dcim, oob_config, oob_info):
@@ -247,6 +248,9 @@ class OobBase(object):
 
     def system_ram(self):
         raise NotImplementedError('system-ram')
+
+    def factory_reset(self):
+        raise NotImplementedError('factory-reset')
 
     def lock_power_switch(self):
         raise NotImplementedError('lock-power-switch')
