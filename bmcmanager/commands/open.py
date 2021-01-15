@@ -20,6 +20,7 @@ class DCIM(BMCManagerServerCommand):
     """
     open server page on DCIM
     """
+
     dcim_fetch_secrets = False
     oob_method = 'open_dcim'
 
@@ -28,6 +29,7 @@ class Web(BMCManagerServerCommand):
     """
     open IPMI web interface
     """
+
     oob_method = 'open'
     dcim_fetch_secrets = False
 
@@ -36,11 +38,15 @@ class Console(BMCManagerServerCommand):
     """
     open console
     """
+
     oob_method = 'console'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--print-cmd', action='store_true', default=False,
-            help='orint the command instead of opening the console')
+            '--print-cmd',
+            action='store_true',
+            default=False,
+            help='orint the command instead of opening the console',
+        )
         return parser

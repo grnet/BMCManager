@@ -13,18 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerListCommand
+from bmcmanager.commands.base import (
+    BMCManagerServerCommand,
+    BMCManagerServerListCommand,
+)
 
 
 class Get(BMCManagerServerListCommand):
     """
     print system event logs
     """
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--analysed', action='store_true', default=False,
-            help='decode OEM specific fields')
+            '--analysed',
+            action='store_true',
+            default=False,
+            help='decode OEM specific fields',
+        )
         return parser
 
     def action(self, oob):
@@ -38,11 +45,15 @@ class Clear(BMCManagerServerCommand):
     """
     clear system event logs
     """
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--from-firmware-upgrades', action='store_true', default=False,
-            help='clear logs from firmware upgrades only')
+            '--from-firmware-upgrades',
+            action='store_true',
+            default=False,
+            help='clear logs from firmware upgrades only',
+        )
         return parser
 
     def action(self, oob):

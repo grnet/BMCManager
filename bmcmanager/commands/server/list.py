@@ -14,13 +14,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from bmcmanager.commands.base import (
-    get_dcim, get_config, BMCManagerServerListCommand)
+    get_dcim,
+    get_config,
+    BMCManagerServerListCommand,
+)
 
 
 class List(BMCManagerServerListCommand):
     """
     print list of available servers
     """
+
     columns = [
         'id',
         'name',
@@ -34,7 +38,6 @@ class List(BMCManagerServerListCommand):
 
     def take_action(self, parsed_args):
         dcim = get_dcim(parsed_args, get_config(parsed_args.config_file))
-        values = [[o['info'][col]
-                   for col in self.columns] for o in dcim.get_oobs()]
+        values = [[o['info'][col] for col in self.columns] for o in dcim.get_oobs()]
 
         return self.columns, values

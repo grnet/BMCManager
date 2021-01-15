@@ -36,6 +36,7 @@ def int_in_range_argument(itt):
     """
     argparse integer in range
     """
+
     def argparse_type(value):
         ivalue = int(value)
         if ivalue not in itt:
@@ -60,32 +61,27 @@ def base_arguments(parser):
     """
     Base bmcmanager arguments
     """
-    parser.add_argument(
-        '--config-file',
-        help='configuration file path',
-        default=''
-    )
+    parser.add_argument('--config-file', help='configuration file path', default='')
 
 
 def server_arguments(parser):
     """
     Add server selection arguments
     """
+    parser.add_argument('server', help='server name')
     parser.add_argument(
-        'server',
-        help='server name'
-    )
-    parser.add_argument(
-        '-d', '--dcim',
+        '-d',
+        '--dcim',
         help='name of DCIM to use',
         choices=['netbox', 'maas'],
         default='netbox',
     )
     parser.add_argument(
-        '-t', '--type',
+        '-t',
+        '--type',
         help='unit type',
         choices=['name', 'rack', 'rack-unit', 'serial'],
-        default='search'
+        default='search',
     )
 
 
@@ -94,11 +90,9 @@ def get_dcim(args, config):
     Get a configured DCIM from arguments and configuration
     """
     if args.dcim not in DCIMS:
-        raise RuntimeError(
-            'Unsupported DCIM "{}", see {}'.format(args.dcim, README))
+        raise RuntimeError('Unsupported DCIM "{}", see {}'.format(args.dcim, README))
     if args.dcim not in config:
-        raise RuntimeError(
-            'No configuration for DCIM "{}", see {}'.format(args.dcim, README))
+        raise RuntimeError('No configuration for DCIM "{}", see {}'.format(args.dcim, README))
     return DCIMS[args.dcim](args, config[args.dcim])
 
 
@@ -126,10 +120,8 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
     cfg['username'] = os.getenv('BMCMANAGER_USERNAME', cfg['username'])
     cfg['password'] = os.getenv('BMCMANAGER_PASSWORD', cfg['password'])
 
-    cfg['nfs_share'] = os.getenv(
-        'BMCMANAGER_NFS_SHARE', oob_params.get('nfs_share'))
-    cfg['http_share'] = os.getenv(
-        'BMCMANAGER_HTTP_SHARE', oob_params.get('http_share'))
+    cfg['nfs_share'] = os.getenv('BMCMANAGER_NFS_SHARE', oob_params.get('nfs_share'))
+    cfg['http_share'] = os.getenv('BMCMANAGER_HTTP_SHARE', oob_params.get('http_share'))
 
     cfg['oob_params'] = oob_params
     return cfg
@@ -166,6 +158,7 @@ class BMCManagerServerCommand(Command):
     """
     base command for working with a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):
@@ -186,6 +179,7 @@ class BMCManagerServerGetCommand(ShowOne):
     """
     base command for retrieving information for a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):
@@ -205,6 +199,7 @@ class BMCManagerServerListCommand(Lister):
     """
     base command for retrieving a list of information for a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):

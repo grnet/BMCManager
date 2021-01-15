@@ -27,7 +27,7 @@ class BMCManagerApp(App):
             description='BMCManager',
             version=version_string,
             command_manager=CommandManager('bmcmanager.entrypoints'),
-            deferred_help=True
+            deferred_help=True,
         )
 
 

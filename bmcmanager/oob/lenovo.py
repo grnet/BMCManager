@@ -38,9 +38,7 @@ DISK_TYPE = {
     1: 'SSD',
 }
 
-DISK_INTERFACE = {
-    2: 'SAS'
-}
+DISK_INTERFACE = {2: 'SAS'}
 
 DISK_SPEED = {
     3: '6.0Gb/s',
@@ -58,12 +56,10 @@ DEV_ID = {
     4: 'PSU',
     5: 'RAID',
     6: 'Mezz',
-
     201: 'TDM',
     202: 'LG_WIND',
     203: 'LG_LIND',
     205: 'LG_DIAG',
-
     # Not reported by osput
     204: 'LG_WORK',
     3: 'LG_CPLD_000',
@@ -80,7 +76,7 @@ class Lenovo(OobBase):
     def _get_console_data(self):
         return {
             'WEBVAR_PASSWORD': str(self.password),
-            'WEBVAR_USERNAME': str(self.username)
+            'WEBVAR_USERNAME': str(self.username),
         }
 
     def _parse_response(self, text):
@@ -90,7 +86,7 @@ class Lenovo(OobBase):
         try:
             start = text.find('[')
             end = text.rfind(']')
-            results = eval(text[start:end + 1])
+            results = eval(text[start : end + 1])
 
             # drop empty '{}' objects from list of responses
             return [r for r in results if r], False
@@ -143,7 +139,7 @@ class Lenovo(OobBase):
             cookies=cookies,
             headers=headers,
             verify=False,
-            timeout=60
+            timeout=60,
         )
 
     def console(self):
@@ -151,8 +147,7 @@ class Lenovo(OobBase):
 
         ipmi = self._get_http_ipmi_host()
         url = ipmi + self.URL_VNC.format(ipmi.replace('https://', ''))
-        answer = self._post(
-            url, None, self.session_token, self.CSRF_token).text
+        answer = self._post(url, None, self.session_token, self.CSRF_token).text
 
         _, myjviewer = tempfile.mkstemp()
         m = '\n<argument>-title</argument>\n<argument>{}</argument>'
@@ -181,8 +176,7 @@ class Lenovo(OobBase):
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname=hostname, port=port,
-                       username=username, password=password)
+        client.connect(hostname=hostname, port=port, username=username, password=password)
         _, stdout, stderr = client.exec_command('show admin1/hdwr1/memory1')
         output = stdout.read().decode()
 
@@ -200,17 +194,22 @@ class Lenovo(OobBase):
         expected = self.parsed_args.expected
 
         ram = self._system_ram()
-        if (expected is None and ram > 0) \
-                or (expected is not None and ram == expected):
+        if (expected is None and ram > 0) or (expected is not None and ram == expected):
             nagios.result(nagios.OK, '{}GB'.format(str(ram)), pre=pre)
         elif expected is None:
             nagios.result(nagios.UNKNOWN, 'Failed to read RAM')
         elif ram < expected:
-            nagios.result(nagios.CRITICAL, '{}GB, expected {}GB'.format(
-                str(ram), str(expected)), pre=pre)
+            nagios.result(
+                nagios.CRITICAL,
+                '{}GB, expected {}GB'.format(str(ram), str(expected)),
+                pre=pre,
+            )
         elif ram > expected:
-            nagios.result(nagios.WARNING, '{}GB, expected {}GB'.format(
-                str(ram), str(expected)), pre=pre)
+            nagios.result(
+                nagios.WARNING,
+                '{}GB, expected {}GB'.format(str(ram), str(expected)),
+                pre=pre,
+            )
 
     def lock_power_switch(self):
         self._execute(['raw', '0x00', '0x0a', '0x01'])
@@ -227,8 +226,7 @@ class Lenovo(OobBase):
         response = self._post(url, params, self.session_token, self.CSRF_token)
 
         if response.status_code != 200:
-            log.critical('Cannot retrieve {}, error {}'.format(
-                item, response.status_code))
+            log.critical('Cannot retrieve {}, error {}'.format(item, response.status_code))
             return []
 
         resp, _ = self._parse_response(response.text)
@@ -238,30 +236,39 @@ class Lenovo(OobBase):
         return self._get_rpc('gethddinfo', 'disks')
 
     def _get_sel(self):
-        res = self._get_rpc('getanalysedsel', 'SEL', params={
-            'WEBVAR_END_RECORD': 65535
-        })
+        res = self._get_rpc('getanalysedsel', 'SEL', params={'WEBVAR_END_RECORD': 65535})
         for r in res:
-            r['TimeStamp'] = str(
-                datetime.utcfromtimestamp(r.get('TimeStamp', 0)))
+            r['TimeStamp'] = str(datetime.utcfromtimestamp(r.get('TimeStamp', 0)))
 
         return res
 
     def get_disks(self):
         disks = self._get_disks()
-        columns = ['index', 'ctrl', 'slot', 'size_gb', 'type', 'state',
-                   'interface', 'speed', 'vendor']
-        values = [[
-            disk['DRIVE_INDEX'],
-            disk['CONTROLLER_INDEX'],
-            disk['SLOT_NUMBER'],
-            disk['SIZE'] // 1024,
-            DISK_TYPE.get(disk['MEDIA_TYPE'], 'N/A'),
-            DISK_STATE.get(disk['DEVICE_STATE'], 'unknown'),
-            DISK_INTERFACE.get(disk['INTF_TYPE'], 'unknown'),
-            DISK_SPEED.get(disk['LINK_SPEED'], 'unknown'),
-            disk['VENDOR_ID'],
-        ] for disk in disks]
+        columns = [
+            'index',
+            'ctrl',
+            'slot',
+            'size_gb',
+            'type',
+            'state',
+            'interface',
+            'speed',
+            'vendor',
+        ]
+        values = [
+            [
+                disk['DRIVE_INDEX'],
+                disk['CONTROLLER_INDEX'],
+                disk['SLOT_NUMBER'],
+                disk['SIZE'] // 1024,
+                DISK_TYPE.get(disk['MEDIA_TYPE'], 'N/A'),
+                DISK_STATE.get(disk['DEVICE_STATE'], 'unknown'),
+                DISK_INTERFACE.get(disk['INTF_TYPE'], 'unknown'),
+                DISK_SPEED.get(disk['LINK_SPEED'], 'unknown'),
+                disk['VENDOR_ID'],
+            ]
+            for disk in disks
+        ]
 
         return columns, values
 
@@ -276,17 +283,22 @@ class Lenovo(OobBase):
         return columns, values
 
     def _format_disk(self, disk):
-        return ' | '.join(map(str, [
-            disk['DRIVE_INDEX'],
-            'ctrl{}'.format(disk['CONTROLLER_INDEX']),
-            'slot{}'.format(disk['SLOT_NUMBER']),
-            '{}gb'.format(disk['SIZE'] // 1024),
-            DISK_TYPE.get(disk['MEDIA_TYPE'], 'N/A'),
-            DISK_STATE.get(disk['DEVICE_STATE'], 'unknown'),
-            DISK_INTERFACE.get(disk['INTF_TYPE'], 'unknown'),
-            DISK_SPEED.get(disk['LINK_SPEED'], 'unknown'),
-            disk['VENDOR_ID'],
-        ]))
+        return ' | '.join(
+            map(
+                str,
+                [
+                    disk['DRIVE_INDEX'],
+                    'ctrl{}'.format(disk['CONTROLLER_INDEX']),
+                    'slot{}'.format(disk['SLOT_NUMBER']),
+                    '{}gb'.format(disk['SIZE'] // 1024),
+                    DISK_TYPE.get(disk['MEDIA_TYPE'], 'N/A'),
+                    DISK_STATE.get(disk['DEVICE_STATE'], 'unknown'),
+                    DISK_INTERFACE.get(disk['INTF_TYPE'], 'unknown'),
+                    DISK_SPEED.get(disk['LINK_SPEED'], 'unknown'),
+                    disk['VENDOR_ID'],
+                ],
+            )
+        )
 
     def check_disks(self):
         pre = '{} disks'.format(self.oob_info['identifier'])
@@ -304,8 +316,7 @@ class Lenovo(OobBase):
         if disks_crit:
             status = nagios.CRITICAL
             lines.append('{} disks CRITICAL:'.format(len(disks_crit)))
-            lines.extend(
-                map(lambda d: '- {}'.format(self._format_disk(d)), disks_crit))
+            lines.extend(map(lambda d: '- {}'.format(self._format_disk(d)), disks_crit))
             msg.append('{} disks CRITICAL'.format(len(disks_crit)))
 
         msg.append('{} disks OK'.format(len(disks_ok)))
@@ -314,8 +325,7 @@ class Lenovo(OobBase):
             status = max(status, nagios.WARNING)
 
             lines.append('{} disks OK:'.format(len(disks_ok)))
-            lines.extend(
-                map(lambda d: '- {}'.format(self._format_disk(d)), disks_ok))
+            lines.extend(map(lambda d: '- {}'.format(self._format_disk(d)), disks_ok))
             if len(disks_ok) < expected:
                 status = max(status, nagios.CRITICAL)
 
@@ -325,10 +335,12 @@ class Lenovo(OobBase):
         return self._get_rpc('getimageinfo', 'firmware versions')
 
     def _format_fw(self, fw):
-        return '- ' + ' | '.join([
-            DEV_ID.get(fw['DEV_TYPE'], 'unknown'),
-            fw['CURIMG_VER'],
-        ])
+        return '- ' + ' | '.join(
+            [
+                DEV_ID.get(fw['DEV_TYPE'], 'unknown'),
+                fw['CURIMG_VER'],
+            ]
+        )
 
     def get_firmware(self):
         firmwares = self._get_image_info()
@@ -353,8 +365,13 @@ class Lenovo(OobBase):
             elif device_id == 'TSM':
                 custom_fields['TSM'] = version
             elif device_id == 'PSU':
-                psus.append('{}/{}: {}'.format(
-                    firmware['SLOT_NO'], firmware['DEV_IDENTIFIER'], version))
+                psus.append(
+                    '{}/{}: {}'.format(
+                        firmware['SLOT_NO'],
+                        firmware['DEV_IDENTIFIER'],
+                        version,
+                    )
+                )
 
         custom_fields['PSU'] = ', '.join(sorted(psus))
 
@@ -367,13 +384,21 @@ class Lenovo(OobBase):
 
     def firmware_upgrade_osput(self):
         ipmi = self.oob_info['ipmi'].replace('https://', '')
-        return self._execute_cmd([
-            self.parsed_args.osput,
-            '-H', ipmi,
-            '-u', self.username,
-            '-p', self.password,
-            '-f', self.parsed_args.bundle,
-            '-c', 'update'])
+        return self._execute_cmd(
+            [
+                self.parsed_args.osput,
+                '-H',
+                ipmi,
+                '-u',
+                self.username,
+                '-p',
+                self.password,
+                '-f',
+                self.parsed_args.bundle,
+                '-c',
+                'update',
+            ]
+        )
 
     def firmware_upgrade_rpc(self):
         args = self.parsed_args
@@ -415,9 +440,8 @@ class Lenovo(OobBase):
                 verify=False,
                 cookies=self.session_token,
                 headers=self.CSRF_token,
-                files={
-                    'bundle?FWUPSessionid={}'.format(handle): args.bundle
-                })
+                files={'bundle?FWUPSessionid={}'.format(handle): args.bundle},
+            )
 
             log.debug(r.status_code)
             if r.status_code == 200:
@@ -467,14 +491,17 @@ class Lenovo(OobBase):
         if 8 in args.stages and to_update:
             handle = handle or args.handle
             log.info('Choose component update')
-            r = self._get_rpc('setupdatecomp', params={
-                'UPDATE_FLAG': to_update['DEV_TYPE'],
-                'UPDATE_CNT': 1,
-                'FW_DEVICE_TYPE': to_update['DEV_TYPE'],
-                'SLOT_NO': to_update['SLOT_NO'],
-                'DEV_IDENTIFIER': to_update['DEV_IDENTIFIER'],
-                'SESSION_ID': handle,
-            })
+            r = self._get_rpc(
+                'setupdatecomp',
+                params={
+                    'UPDATE_FLAG': to_update['DEV_TYPE'],
+                    'UPDATE_CNT': 1,
+                    'FW_DEVICE_TYPE': to_update['DEV_TYPE'],
+                    'SLOT_NO': to_update['SLOT_NO'],
+                    'DEV_IDENTIFIER': to_update['DEV_IDENTIFIER'],
+                    'SESSION_ID': handle,
+                },
+            )
             log.debug(r)
             if r == []:
                 log.info('Choose component update: OK')
@@ -487,8 +514,7 @@ class Lenovo(OobBase):
                 try:
                     r = self._get_rpc('getcompupdatestatus')
                     log.debug(r)
-                    dev = next((
-                        x for x in r if self._matching(x, to_update)), None)
+                    dev = next((x for x in r if self._matching(x, to_update)), None)
                     log.debug(dev)
                     progress = (dev or {}).get('UPDATE_PERCENTAGE')
                     if progress is None:
@@ -506,9 +532,7 @@ class Lenovo(OobBase):
         if 10 in args.stages:
             handle = handle or args.handle
             log.info('Exit FW update mode')
-            r = self._get_rpc('getexitfwupdatemode', params={
-                'MODE': 0, 'RNDNO': handle
-            })
+            r = self._get_rpc('getexitfwupdatemode', params={'MODE': 0, 'RNDNO': handle})
             log.debug(r)
             if r == []:
                 log.info('Exit FW update mode: OK')
@@ -538,11 +562,14 @@ class Lenovo(OobBase):
 
         self._connect()
         log.info('Setting preserve config')
-        r = self._get_rpc('setpreservecfg', params={
-            'PRSRV_CFG': '0,0,0,0,0,0,0,0,0,0,0,',
-            'PRSRV_CFG_CNT': '11',
-            'PRSRV_SELECT': '0,1,2,3,4,5,6,7,8,9,10,',
-        })
+        r = self._get_rpc(
+            'setpreservecfg',
+            params={
+                'PRSRV_CFG': '0,0,0,0,0,0,0,0,0,0,0,',
+                'PRSRV_CFG_CNT': '11',
+                'PRSRV_SELECT': '0,1,2,3,4,5,6,7,8,9,10,',
+            },
+        )
         log.debug(r)
 
         log.info('Starting factory reset')
@@ -556,8 +583,7 @@ class Lenovo(OobBase):
                 try:
                     url = self._get_http_ipmi_host() + self.URL_VALIDATE
 
-                    answer = self._post(
-                        url, None, self.session_token, self.CSRF_token)
+                    answer = self._post(url, None, self.session_token, self.CSRF_token)
                     if answer.status_code == 200:
                         log.info('Done.')
                         return
@@ -566,7 +592,8 @@ class Lenovo(OobBase):
                     requests.exceptions.ReadTimeout,
                     requests.exceptions.ConnectionError,
                     ConnectionResetError,
-                    BrokenPipeError):
+                    BrokenPipeError,
+                ):
                     log.info('In progress')
 
                 time.sleep(10)

@@ -26,7 +26,7 @@ from bmcmanager import nagios, exitcode
 from bmcmanager.commands.base import (
     BMCManagerServerCommand,
     BMCManagerServerListCommand,
-    int_in_range_argument
+    int_in_range_argument,
 )
 from bmcmanager.logs import log
 from bmcmanager.firmwares import firmware_fetchers
@@ -36,6 +36,7 @@ class Get(BMCManagerServerListCommand):
     """
     print server firmware versions
     """
+
     oob_method = 'get_firmware'
 
 
@@ -43,6 +44,7 @@ class Refresh(BMCManagerServerCommand):
     """
     update server firmware information on DCIM
     """
+
     oob_method = 'refresh_firmware'
 
 
@@ -50,6 +52,7 @@ class Check(BMCManagerServerCommand):
     """
     check server firmware version [Nagios]
     """
+
     oob_method = 'check_firmware'
     dcim_fetch_secrets = False
 
@@ -58,24 +61,37 @@ class UpgradeRPC(BMCManagerServerCommand):
     """
     perform firmware upgrade using RPC
     """
+
     oob_method = 'firmware_upgrade_rpc'
     all_stages = range(1, 11)
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--timeout', type=int, default=60,
-            help='advanced; seconds before failing because of timeout')
+            '--timeout',
+            type=int,
+            default=60,
+            help='advanced; seconds before failing because of timeout',
+        )
         parser.add_argument(
-            '--handle', type=int, default=None,
-            help='advanced; Use this handle for upgrade [Lenovo]')
+            '--handle',
+            type=int,
+            default=None,
+            help='advanced; Use this handle for upgrade [Lenovo]',
+        )
         parser.add_argument(
-            '--bundle', required=True, type=argparse.FileType('rb'),
-            help='Bundle file to use for firmware upgrade')
+            '--bundle',
+            required=True,
+            type=argparse.FileType('rb'),
+            help='Bundle file to use for firmware upgrade',
+        )
         parser.add_argument(
-            '--stages', nargs='+', default=self.all_stages,
+            '--stages',
+            nargs='+',
+            default=self.all_stages,
             type=int_in_range_argument(self.all_stages),
-            help='advanced; Only perform specific upgrade stages [Lenovo]')
+            help='advanced; Only perform specific upgrade stages [Lenovo]',
+        )
 
         return parser
 
@@ -84,16 +100,23 @@ class UpgradeOsput(BMCManagerServerCommand):
     """
     perform firmware upgrade using osput [Lenovo]
     """
+
     oob_method = 'firmware_upgrade_osput'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--osput', type=str, default='osput',
-            help='override path to the `osput` executable [lenovo]')
+            '--osput',
+            type=str,
+            default='osput',
+            help='override path to the `osput` executable [lenovo]',
+        )
         parser.add_argument(
-            '--bundle', type=str, required=True,
-            help='bundle file to use for firmware upgrade')
+            '--bundle',
+            type=str,
+            required=True,
+            help='bundle file to use for firmware upgrade',
+        )
         return parser
 
 
@@ -101,17 +124,23 @@ class LatestGet(Lister):
     """
     print and download latest firmware version bundles
     """
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            'model', choices=firmware_fetchers.keys(),
-            help='server model for which to look for new firwmare')
+            'model',
+            choices=firmware_fetchers.keys(),
+            help='server model for which to look for new firwmare',
+        )
         parser.add_argument(
             '--download-to',
-            help='download available firmware files to this location')
+            help='download available firmware files to this location',
+        )
         parser.add_argument(
-            '--innoextract', action='store_true',
-            help='extract `.exe` files using innoextract')
+            '--innoextract',
+            action='store_true',
+            help='extract `.exe` files using innoextract',
+        )
         return parser
 
     def _execute_cmd(self, command):
@@ -119,8 +148,7 @@ class LatestGet(Lister):
         try:
             call(command)
         except CalledProcessError as e:
-            raise RuntimeError('Command {} failed: {}'.format(
-                ' '.join(command), str(e)))
+            raise RuntimeError('Command {} failed: {}'.format(' '.join(command), str(e)))
 
     def take_action(self, parsed_args):
         try:
@@ -145,7 +173,7 @@ class LatestGet(Lister):
             sys.exit(-1)
 
         for url in downloads:
-            name = url[url.rfind('/') + 1:]
+            name = url[url.rfind('/') + 1 :]
             file_name = os.path.join(parsed_args.download_to, name)
             log.info('Downloading {} to {}'.format(url, file_name))
             try:
@@ -156,8 +184,7 @@ class LatestGet(Lister):
 
             if parsed_args.innoextract and name.endswith('.exe'):
                 log.info('Extracting with innoextract')
-                self._execute_cmd([
-                    'innoextract', file_name, '-d', parsed_args.download_to])
+                self._execute_cmd(['innoextract', file_name, '-d', parsed_args.download_to])
 
         return columns, values
 
@@ -166,14 +193,19 @@ class LatestCheck(Command):
     """
     check for new firmware versions
     """
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            'model', choices=firmware_fetchers.keys(),
-            help='server model for which to look for new firwmare')
+            'model',
+            choices=firmware_fetchers.keys(),
+            help='server model for which to look for new firwmare',
+        )
         parser.add_argument(
-            '--after', type=str, required=True,
-            help='check that there are no firmware releases after this date (YYYY-MM-DD)'
+            '--after',
+            type=str,
+            required=True,
+            help='check that there are no firmware releases after this date (YYYY-MM-DD)',
         )
         return parser
 
@@ -190,23 +222,24 @@ class LatestCheck(Command):
         new_firmware = []
         for item in result:
             if item['date'] > parsed_args.after:
-                new_firmware.append('- {} / {} / {} / {}'.format(
-                    item['date'],
-                    item['component'],
-                    item['version'],
-                    item['name'],
-                ))
+                new_firmware.append(
+                    '- {} / {} / {} / {}'.format(
+                        item['date'],
+                        item['component'],
+                        item['version'],
+                        item['name'],
+                    )
+                )
 
         if new_firmware:
             state = nagios.CRITICAL
             msg = '{} new firmware version releases since {}'.format(
-                len(new_firmware), parsed_args.after)
+                len(new_firmware), parsed_args.after
+            )
         else:
             state = nagios.OK
-            msg = 'No new firmware version releases since {}'.format(
-                parsed_args.after)
+            msg = 'No new firmware version releases since {}'.format(parsed_args.after)
 
-        nagios.result(
-            state, msg, lines=new_firmware, pre='Firmware Versions')
+        nagios.result(state, msg, lines=new_firmware, pre='Firmware Versions')
 
         sys.exit(exitcode.get())

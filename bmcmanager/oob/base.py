@@ -35,14 +35,28 @@ else:
 SEL_ID, SEL_DATE, SEL_TIME, SEL_NAME, SEL_TYPE, SEL_STATE, SEL_EVENT = range(7)
 
 # Column indexes for ipmi-sensors output
-SSR_ID, SSR_NAME, SSR_TYPE, SSR_STATE, SSR_VALUE, SSR_UNIT, _, SSR_CRITL, \
-    SSR_WARNL, SSR_WARNH, SSR_CRITH, _, SSR_DESC = range(13)
+(
+    SSR_ID,
+    SSR_NAME,
+    SSR_TYPE,
+    SSR_STATE,
+    SSR_VALUE,
+    SSR_UNIT,
+    _,
+    SSR_CRITL,
+    SSR_WARNL,
+    SSR_WARNH,
+    SSR_CRITH,
+    _,
+    SSR_DESC,
+) = range(13)
 
 
 class OobBase(object):
     """
     Base OOB class
     """
+
     URL_LOGIN = '/rpc/WEBSES/create.asp'
     URL_VALIDATE = '/rpc/WEBSES/validate.asp'
     URL_VNC = '/Java/jviewer.jnlp?EXTRNIP={}&JNLPSTR=JViewer'
@@ -74,8 +88,7 @@ class OobBase(object):
         try:
             Popen(command)
         except:
-            raise OobError('Could not open browser {}'.format(
-                ' '.join(command)))
+            raise OobError('Could not open browser {}'.format(' '.join(command)))
 
     def _get_http_ipmi_host(self):
         ipmi_host = self.oob_info['ipmi']
@@ -93,7 +106,7 @@ class OobBase(object):
             if 'off' in self._execute(status_command, output=True):
                 log.info('Waiting for machine to turn on...')
 
-            while (1):
+            while 1:
                 if 'off' not in self._execute(status_command, output=True):
                     break
 
@@ -104,8 +117,17 @@ class OobBase(object):
 
     def _get_ipmi_tool_prefix(self):
         host = self.oob_info['ipmi'].replace('https://', '')
-        return ['ipmitool', '-U', self.username, '-P', self.password,
-                '-I', 'lanplus', '-H', host]
+        return [
+            'ipmitool',
+            '-U',
+            self.username,
+            '-P',
+            self.password,
+            '-I',
+            'lanplus',
+            '-H',
+            host,
+        ]
 
     # command is an array
     def _execute(self, command, output=False):
@@ -127,11 +149,9 @@ class OobBase(object):
 
             call(command)
         except CalledProcessError as e:
-            raise OobError('Command {} failed: {}'.format(
-                ' '.join(command), str(e)))
+            raise OobError('Command {} failed: {}'.format(' '.join(command), str(e)))
         except UnicodeError as e:
-            raise OobError('Decoding output of {} failed: {}'.format(
-                ' '.join(command), str(e)))
+            raise OobError('Decoding output of {} failed: {}'.format(' '.join(command), str(e)))
 
     def identify(self):
         if self.parsed_args.off:
@@ -139,12 +159,10 @@ class OobBase(object):
         else:
             arg = self.parsed_args.on or 'force'
 
-        self._print(self._execute(
-            ['chassis', 'identify', str(arg)], output=True).strip())
+        self._print(self._execute(['chassis', 'identify', str(arg)], output=True).strip())
 
     def status(self):
-        lines = self._execute(
-            ['chassis', 'status'], output=True).strip().split('\n')
+        lines = self._execute(['chassis', 'status'], output=True).strip().split('\n')
         columns, values = [], []
         for line in lines:
             try:
@@ -158,10 +176,7 @@ class OobBase(object):
         return columns, values
 
     def power_status(self):
-        self._print(self._execute(
-            ['chassis', 'power', 'status'],
-            output=True
-        ).strip())
+        self._print(self._execute(['chassis', 'power', 'status'], output=True).strip())
 
     def power_on(self):
         self._execute(['chassis', 'power', 'on'])
@@ -175,8 +190,7 @@ class OobBase(object):
         self._execute(cmd)
         if self.parsed_args.wait:
             while 1:
-                stdout = self._execute(
-                    ['chassis', 'power', 'status'], output=True)
+                stdout = self._execute(['chassis', 'power', 'status'], output=True)
                 if 'off' in stdout:
                     break
 
@@ -205,8 +219,7 @@ class OobBase(object):
         return ['sel', 'list', *args]
 
     def ipmi_logs(self):
-        lines = self._execute(
-            self._ipmi_logs_cmd(), output=True).strip().split('\n')
+        lines = self._execute(self._ipmi_logs_cmd(), output=True).strip().split('\n')
 
         columns = ['id', 'date', 'time', 'name', 'event', 'state']
         values = [list(map(str.strip, line.split('|'))) for line in lines]
@@ -264,35 +277,59 @@ class OobBase(object):
             args = [*args, os.path.expandvars(cache_dir_arg)]
 
         return [
-            'ipmi-sensors', '-h', host,
-            '-u', username, '-p', password, '-l', 'user',
-            '--quiet-cache', '--sdr-cache-recreate',
-            '--interpret-oem-data', '--output-sensor-state',
+            'ipmi-sensors',
+            '-h',
+            host,
+            '-u',
+            username,
+            '-p',
+            password,
+            '-l',
+            'user',
+            '--quiet-cache',
+            '--sdr-cache-recreate',
+            '--interpret-oem-data',
+            '--output-sensor-state',
             '--ignore-not-available-sensors',
             '--driver-type=LAN_2_0',
             '--output-sensor-thresholds',
-            *args]
+            *args,
+        ]
 
     def _ipmi_sel_cmd(self, host, username, password, args=[]):
         return [
-            'ipmi-sel', '-h', host,
-            '-u', username, '-p', password, '-l', 'user',
+            'ipmi-sel',
+            '-h',
+            host,
+            '-u',
+            username,
+            '-p',
+            password,
+            '-l',
+            'user',
             '--driver-type=LAN_2_0',
             '--output-event-state',
             '--interpret-oem-data',
             '--entity-sensor-names',
             '--sensor-types=all',
             '--ignore-sdr-cache',
-            *args
+            *args,
         ]
 
     def _ipmi_dcmi_cmd(self, host, username, password, args=[]):
         return [
-            'ipmi-dcmi', '-h', host,
-            '-u', username, '-p', password, '-l', 'user',
+            'ipmi-dcmi',
+            '-h',
+            host,
+            '-u',
+            username,
+            '-p',
+            password,
+            '-l',
+            'user',
             '--driver-type=LAN_2_0',
             '--get-system-power-statistics',
-            *args
+            *args,
         ]
 
     def ipmi_sensors(self):
@@ -305,9 +342,19 @@ class OobBase(object):
         return (columns, values)
 
     def _format_sensor(self, sensor):
-        return '- ' + ' | '.join([sensor[x] for x in [
-            SSR_ID, SSR_TYPE, SSR_NAME, SSR_VALUE, SSR_UNIT, SSR_DESC
-        ]])
+        return '- ' + ' | '.join(
+            [
+                sensor[x]
+                for x in [
+                    SSR_ID,
+                    SSR_TYPE,
+                    SSR_NAME,
+                    SSR_VALUE,
+                    SSR_UNIT,
+                    SSR_DESC,
+                ]
+            ]
+        )
 
     def __clear_na(self, x):
         return '' if x == 'N/A' else x
@@ -335,9 +382,19 @@ class OobBase(object):
         return result
 
     def _format_sel(self, sel):
-        return '- ' + ' | '.join([sel[x] for x in [
-            SEL_ID, SEL_DATE, SEL_TIME, SEL_TYPE, SEL_NAME, SEL_EVENT
-        ]])
+        return '- ' + ' | '.join(
+            [
+                sel[x]
+                for x in [
+                    SEL_ID,
+                    SEL_DATE,
+                    SEL_TIME,
+                    SEL_TYPE,
+                    SEL_NAME,
+                    SEL_EVENT,
+                ]
+            ]
+        )
 
     def _get_sel_errors(self, host):
         cmd = self._ipmi_sel_cmd(host, self.username, self.password)
@@ -404,15 +461,21 @@ class OobBase(object):
         if sensor_warnings:
             status = nagios.WARNING
             msg.append('{} sensors warning'.format(len(sensor_warnings)))
-            lines.extend([
-                'Warning sensors:',
-                *map(lambda x: self._format_sensor(x), sensor_warnings)])
+            lines.extend(
+                [
+                    'Warning sensors:',
+                    *map(lambda x: self._format_sensor(x), sensor_warnings),
+                ]
+            )
         if sensor_errors:
             status = nagios.CRITICAL
             msg.append('{} sensors critical'.format(len(sensor_errors)))
-            lines.extend([
-                'Critical sensors:',
-                *map(lambda x: self._format_sensor(x), sensor_errors)])
+            lines.extend(
+                [
+                    'Critical sensors:',
+                    *map(lambda x: self._format_sensor(x), sensor_errors),
+                ]
+            )
         if sel_errors:
             status = nagios.CRITICAL
             msg.append('{} SEL entries'.format(len(sel_errors)))
@@ -420,13 +483,15 @@ class OobBase(object):
 
             # cap number of SEL entries returned
             if len(sel_errors) > 10:
-                sel_entries_header += ' (showing latest 10/{})'.format(
-                    len(sel_errors))
+                sel_entries_header += ' (showing latest 10/{})'.format(len(sel_errors))
                 sel_errors = sel_errors[:10]
 
-            lines.extend([
-                sel_entries_header,
-                *map(lambda x: self._format_sel(x), sel_errors)])
+            lines.extend(
+                [
+                    sel_entries_header,
+                    *map(lambda x: self._format_sel(x), sel_errors),
+                ]
+            )
 
         perfdata = [' '.join(perfdata)]
         nagios.result(status, msg or 'SEL, Sensors OK', lines, perfdata, pre)
@@ -446,10 +511,13 @@ class OobBase(object):
         if self.parsed_args.command:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(hostname=hostname, port=port,
-                           username=username, password=password)
-            _, out, err = client.exec_command(
-                ' '.join(self.parsed_args.command))
+            client.connect(
+                hostname=hostname,
+                port=port,
+                username=username,
+                password=password,
+            )
+            _, out, err = client.exec_command(' '.join(self.parsed_args.command))
             print(out.read().decode())
             if err:
                 print(err.read().decode(), file=sys.stderr)
@@ -465,8 +533,7 @@ class OobBase(object):
 
     def check_firmware(self):
         pre = '{} Firmware versions'.format(self.oob_info['identifier'])
-        state, msg = firmware.check_firmware(
-            self.oob_info['custom_fields'], self.oob_config)
+        state, msg = firmware.check_firmware(self.oob_info['custom_fields'], self.oob_config)
 
         nagios.result(state, msg, pre=pre)
 
@@ -503,7 +570,8 @@ class OobBase(object):
             self.parsed_args.secret_role,
             self.oob_info['info'],
             self.parsed_args.secret_name,
-            self.parsed_args.secret_plaintext)
+            self.parsed_args.secret_plaintext,
+        )
 
         if r.status_code >= 300:
             self._print('Error {}'.format(r.text))
@@ -520,7 +588,7 @@ class OobBase(object):
         found = False
         for line in stdout[1:]:
             uid = line[:name_start].strip()
-            username = line[name_start:line.find(' ', name_start)]
+            username = line[name_start : line.find(' ', name_start)]
 
             if username == self.username:
                 found = True
@@ -531,13 +599,21 @@ class OobBase(object):
             self._print('User {} not found'.format(self.username))
             return
 
-        self._print(self._execute([
-            'user', 'set', 'password', uid, args.new_password], output=True))
+        self._print(
+            self._execute(
+                ['user', 'set', 'password', uid, args.new_password],
+                output=True,
+            )
+        )
 
         if args.secret_role is not None:
             self._print('Updating {} NetBox secret'.format(args.secret_role))
-            r = self.dcim.set_secret(args.secret_role, self.oob_info['info'],
-                                     username, args.new_password)
+            r = self.dcim.set_secret(
+                args.secret_role,
+                self.oob_info['info'],
+                username,
+                args.new_password,
+            )
             if r.status_code >= 300:
                 log.critical('Setting NetBox secret failed')
                 log.critical('Error {}:\n{}'.format(r.status_code, r.text))
@@ -563,8 +639,7 @@ class OobBase(object):
         args = self.parsed_args
         regex = {
             'ipv4': r'^IP Address\s*:\s*(?P<addr>\d+(\.\d+){3})',
-            'mac':
-                r'MAC Address\s*:\s*(?P<addr>[a-f0-9]{2}(\:[a-f0-9]{2}){5})',
+            'mac': r'MAC Address\s*:\s*(?P<addr>[a-f0-9]{2}(\:[a-f0-9]{2}){5})',
         }.get(args.address_type)
 
         if regex is None:

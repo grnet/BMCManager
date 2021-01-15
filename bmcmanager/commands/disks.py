@@ -13,13 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerListCommand
+from bmcmanager.commands.base import (
+    BMCManagerServerCommand,
+    BMCManagerServerListCommand,
+)
 
 
 class Get(BMCManagerServerListCommand):
     """
     print attached disks
     """
+
     oob_method = 'get_disks'
 
 
@@ -27,11 +31,15 @@ class Check(BMCManagerServerCommand):
     """
     check attached disks [Nagios]
     """
+
     oob_method = 'check_disks'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--expected', type=int, default=None,
-            help='number of healthy disks the server must have')
+            '--expected',
+            type=int,
+            default=None,
+            help='number of healthy disks the server must have',
+        )
         return parser

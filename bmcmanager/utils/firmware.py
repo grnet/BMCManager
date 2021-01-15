@@ -55,16 +55,14 @@ def psu_checks(all_psu_versions, version_dict):
     try:
         psu_info = all_psu_versions.split(', ')
     except (ValueError, TypeError, AttributeError):
-        return {
-            'psu': (nagios.CRITICAL, 'invalid data')
-        }
+        return {'psu': (nagios.CRITICAL, 'invalid data')}
 
     results = {}
     for psu in psu_info:
         m = re.match(
-            r'^(?P<psu_slot>\d+)\/(?P<psu_type>\w*)'
-            r':\s(?P<psu_version>\d+\.\d+\.\d+)$',
-            psu)
+            r'^(?P<psu_slot>\d+)\/(?P<psu_type>\w*)' r':\s(?P<psu_version>\d+\.\d+\.\d+)$',
+            psu,
+        )
 
         if not m or not m.groupdict():
             results['psu'] = nagios.CRITICAL, 'invalid data'
@@ -75,13 +73,10 @@ def psu_checks(all_psu_versions, version_dict):
         psu_type = psu_info_dict['psu_type']
 
         version_str = psu_info_dict['psu_version']
-        target_version_str = version_dict.get('psu_{}'.format(
-            psu_type.lower()))
-        res, msg = check_version_strings(
-            version_str, target_version_str, version_check=False)
+        target_version_str = version_dict.get('psu_{}'.format(psu_type.lower()))
+        res, msg = check_version_strings(version_str, target_version_str, version_check=False)
 
-        results['psu-{}'.format(psu_slot)] = res, '{}, {}'.format(
-            msg, psu_type)
+        results['psu-{}'.format(psu_slot)] = res, '{}, {}'.format(msg, psu_type)
 
     return results
 
@@ -91,10 +86,8 @@ def check_firmware(custom_fields, oob_params):
 
     psus = psu_checks(custom_fields['PSU'], oob_params['oob_params'])
     checks = {
-        'bios': check_version_strings(
-            custom_fields['BIOS'], oob_params['oob_params'].get('bios')),
-        'tsm': check_version_strings(
-            custom_fields['TSM'], oob_params['oob_params'].get('tsm')),
+        'bios': check_version_strings(custom_fields['BIOS'], oob_params['oob_params'].get('bios')),
+        'tsm': check_version_strings(custom_fields['TSM'], oob_params['oob_params'].get('tsm')),
         **psus,
     }
 
@@ -106,8 +99,7 @@ def check_firmware(custom_fields, oob_params):
     try:
         expected_psus = int(oob_params['oob_params']['expected_psus'])
         if expected_psus != len(psus):
-            msg.append('{} PSUs present (expected {})'.format(
-                len(psus), expected_psus))
+            msg.append('{} PSUs present (expected {})'.format(len(psus), expected_psus))
             result = max(state, nagios.CRITICAL)
 
     except (TypeError, ValueError, KeyError):

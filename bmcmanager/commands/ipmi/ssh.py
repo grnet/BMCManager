@@ -20,11 +20,14 @@ class SSH(BMCManagerServerCommand):
     """
     connect to IPMI using SSH
     """
+
     oob_method = 'ipmi_ssh'
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            'command', nargs='*',
-            help='execute this command instead of starting a shell')
+            'command',
+            nargs='*',
+            help='execute this command instead of starting a shell',
+        )
         return parser

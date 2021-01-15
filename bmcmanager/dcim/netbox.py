@@ -39,11 +39,9 @@ class Netbox(DcimBase):
         if raw_ids is not None:
             try:
                 # '1, 3,2' --> [1, 2, 3]
-                self.device_type_ids = list(
-                    map(int, map(str.strip, raw_ids.split(','))))
+                self.device_type_ids = list(map(int, map(str.strip, raw_ids.split(','))))
             except (TypeError, ValueError):
-                log.warning('Ignoring invalid device type ids: {}'.format(
-                    raw_ids))
+                log.warning('Ignoring invalid device type ids: {}'.format(raw_ids))
 
         self.info = self._retrieve_info()
 
@@ -61,8 +59,7 @@ class Netbox(DcimBase):
         return params
 
     def _get_rack_id(self):
-        log.debug('Querying the Netbox API for rack {}'.format(
-            self.identifier))
+        log.debug('Querying the Netbox API for rack {}'.format(self.identifier))
         url = os.path.join(self.api_url, 'api/dcim/racks/')
         params = {'name': self.identifier}
         json_response = self._do_request(url, params)
@@ -71,8 +68,7 @@ class Netbox(DcimBase):
         # we expect the response to be a json object
         response = json_response.json()
         if len(response['results']) != 1:
-            raise DcimError('Did not find valid results for rack {}'.format(
-                self.identifier))
+            raise DcimError('Did not find valid results for rack {}'.format(self.identifier))
         return response['results'][0]['id']
 
     def _get_headers(self, with_session_key=False):
@@ -92,14 +88,14 @@ class Netbox(DcimBase):
     def _do_request(self, url, params, with_session_key=False, method='get'):
         headers = self._get_headers(with_session_key)
 
-        log.debug('HTTP {} {}, {}, {}'.format(
-            method.upper(), url, str(params), str(headers)))
+        log.debug('HTTP {} {}, {}, {}'.format(method.upper(), url, str(params), str(headers)))
         try:
             f = getattr(requests, method)
             return f(url, params=params, headers=headers, timeout=self.timeout)
         except (
             requests.exceptions.Timeout,
-            requests.exceptions.ConnectionError):
+            requests.exceptions.ConnectionError,
+        ):
             # useful instead of a long exception dump
             sys.stderr.write('Request timed out {}'.format(url))
             exit(1)
@@ -150,14 +146,14 @@ class Netbox(DcimBase):
         response = self._do_request(
             url=os.path.join(self.api_url, 'api/secrets/secrets/'),
             params={'role': role, 'device': device.upper()},
-            with_session_key=True)
+            with_session_key=True,
+        )
 
         try:
             return response.json()['results'][0]
 
         except (TypeError, KeyError, IndexError):
-            log.warning('Did not find secret {} for device {}'.format(
-                role, device))
+            log.warning('Did not find secret {} for device {}'.format(role, device))
             return {
                 'name': None,
                 'plaintext': None,
@@ -167,7 +163,7 @@ class Netbox(DcimBase):
         log.debug('Searching for id of secret role {}'.format(role_name))
         response = self._do_request(
             url=os.path.join(self.api_url, 'api/secrets/secret-roles/'),
-            params={'slug': role_name}
+            params={'slug': role_name},
         )
 
         try:
@@ -176,8 +172,7 @@ class Netbox(DcimBase):
             return None
 
     def set_secret(self, role_name, oob_info, secret_name, secret_text):
-        log.debug('Will upsert secret {} for device {}'.format(
-            role_name, oob_info['name']))
+        log.debug('Will upsert secret {} for device {}'.format(role_name, oob_info['name']))
 
         role_id = self._get_secret_role_id(role_name)
         if role_id is None:
@@ -189,8 +184,9 @@ class Netbox(DcimBase):
         existing_secrets = self.get_secrets(oob_info)
         for s in existing_secrets:
             if s['role'] == role_name and s['name'] == secret_name:
-                log.debug('Updating secret with role {} and name {}'.format(
-                    role_name, secret_name))
+                log.debug(
+                    'Updating secret with role {} and name {}'.format(role_name, secret_name)
+                )
                 url = os.path.join(url, '{}/'.format(s['id']))
                 f = requests.patch
                 break
@@ -207,15 +203,14 @@ class Netbox(DcimBase):
         )
 
     def _get_secrets(self, oob_info):
-        log.debug('Searching for secrets of device {}'.format(
-            oob_info['name']))
+        log.debug('Searching for secrets of device {}'.format(oob_info['name']))
 
         response = self._do_request(
             url=os.path.join(self.api_url, 'api/secrets/secrets/'),
             params={
                 'device': oob_info['name'],
             },
-            with_session_key=True
+            with_session_key=True,
         )
 
         return response
@@ -223,23 +218,30 @@ class Netbox(DcimBase):
     def get_secrets(self, oob_info):
         resp = self._get_secrets(oob_info)
         try:
-            return [{
-                'id': s['id'],
-                'name': s['name'],
-                'role': s['role']['slug'],
-                'plaintext': s['plaintext'],
-            } for s in resp.json()['results']]
+            return [
+                {
+                    'id': s['id'],
+                    'name': s['name'],
+                    'role': s['role']['slug'],
+                    'plaintext': s['plaintext'],
+                }
+                for s in resp.json()['results']
+            ]
         except (KeyError, ValueError, TypeError):
             return []
 
     def set_custom_fields(self, oob_info, custom_fields):
-        return requests.patch(
-            url=os.path.join(self.api_url, 'api/dcim/devices/{}/'.format(oob_info['info']['id'])),
+        response = requests.patch(
+            url=os.path.join(
+                self.api_url,
+                'api/dcim/devices/{}/'.format(oob_info['info']['id']),
+            ),
             headers=self._get_headers(),
             json={
                 'custom_fields': custom_fields,
             },
-        ).status_code == 200
+        )
+        return response.status_code == 200
 
     def oob_url(self, oob_info):
         return os.path.join(self.api_url, 'dcim/devices/{}/'.format(oob_info['info']['id']))

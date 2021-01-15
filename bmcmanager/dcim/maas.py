@@ -83,5 +83,4 @@ class MaaS(DcimBase):
     def oob_url(self, oob_info):
         if not self.dcim_params.get('ui_url'):
             raise DcimError('MaaS UI URL is not set, see README.md')
-        return '{}/MAAS/l/machine/{}'.format(
-            self.dcim_params['ui_url'], oob_info['info']['id'])
+        return '{}/MAAS/l/machine/{}'.format(self.dcim_params['ui_url'], oob_info['info']['id'])

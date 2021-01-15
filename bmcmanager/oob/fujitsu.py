@@ -47,8 +47,9 @@ class Fujitsu(OobBase):
         password = self.password
 
         auth_handler = request.HTTPDigestAuthHandler()
-        auth_handler.add_password(realm=realm,
-                                  uri=uri, user=username, passwd=password)
+        auth_handler.add_password(
+            realm=realm, uri=uri, user=username, passwd=password
+        )
         opener = request.build_opener(auth_handler)
         request.install_opener(opener)
 

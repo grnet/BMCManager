@@ -15,25 +15,31 @@
 
 from bmcmanager.commands.base import (
     BMCManagerServerCommand,
-    BMCManagerServerGetCommand
+    BMCManagerServerGetCommand,
 )
 
 
 def ipmi_address_arguments(parser):
     parser.add_argument(
-        '--address-type', choices=['ipv4', 'mac'], required=True,
-        help='address type')
+        '--address-type',
+        choices=['ipv4', 'mac'],
+        required=True,
+        help='address type',
+    )
     parser.add_argument(
-        '--scheme', choices=['http', 'https', ''], default='https',
-        help='scheme to prepend to the IPMI address')
-    parser.add_argument(
-        '--domain', help='domain name to append, only with address type "mac"')
+        '--scheme',
+        choices=['http', 'https', ''],
+        default='https',
+        help='scheme to prepend to the IPMI address',
+    )
+    parser.add_argument('--domain', help='domain name to append, only with address type "mac"')
 
 
 class Get(BMCManagerServerGetCommand):
     """
     print IPMI address
     """
+
     oob_method = 'get_ipmi_address'
 
     def get_parser(self, prog_name):
@@ -46,6 +52,7 @@ class Refresh(BMCManagerServerCommand):
     """
     refresh IPMI address on DCIM
     """
+
     oob_method = 'refresh_ipmi_address'
 
     def get_parser(self, prog_name):

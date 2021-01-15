@@ -41,18 +41,23 @@ def get_config(config_path):
             extra_paths.extend([os.path.expandvars('$SNAP_COMMON/bmcmanager')])
 
         if os.getenv('XDG_CONFIG_HOME'):
-            extra_paths.extend([
-                os.path.expandvars('$XDG_CONFIG_HOME/.config/bmcmanager'),
-                os.path.expandvars('$XDG_CONFIG_HOME/bmcmanager')])
+            extra_paths.extend(
+                [
+                    os.path.expandvars('$XDG_CONFIG_HOME/.config/bmcmanager'),
+                    os.path.expandvars('$XDG_CONFIG_HOME/bmcmanager'),
+                ]
+            )
 
         config = configparser.ConfigParser()
-        which = config.read([
-            config_path,
-            os.getenv('BMCMANAGER_CONFIG', ''),
-            os.path.expanduser('~/.config/bmcmanager'),
-            '/etc/bmcmanager',
-            *extra_paths,
-        ])
+        which = config.read(
+            [
+                config_path,
+                os.getenv('BMCMANAGER_CONFIG', ''),
+                os.path.expanduser('~/.config/bmcmanager'),
+                '/etc/bmcmanager',
+                *extra_paths,
+            ]
+        )
 
         log.debug('Loaded config from {}'.format(which))
 

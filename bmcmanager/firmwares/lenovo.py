@@ -39,8 +39,8 @@ LENOVO_URL = 'https://datacentersupport.lenovo.com/gr/en/api/v4/downloads/driver
 
 
 class LenovoBase(LatestFirmwareFetcher):
-    model_name = 'model-name'       # replace in sub-classes, e.g. 'thinkserver'
-    device_name = 'device-name'     # replace in sub-classes, e.g. 'rd550'
+    model_name = 'model-name'  # replace in sub-classes, e.g. 'thinkserver'
+    device_name = 'device-name'  # replace in sub-classes, e.g. 'rd550'
     extra_firmware = {
         # add here any extra firmware items to track
     }
@@ -68,19 +68,25 @@ class LenovoBase(LatestFirmwareFetcher):
                 if component is None:
                     continue
 
-                fw = next(filter(
-                    lambda f: f['TypeString'] != 'TXT README', item['Files']))
+                fw = next(
+                    filter(
+                        lambda f: f['TypeString'] != 'TXT README',
+                        item['Files'],
+                    )
+                )
 
                 downloads.append(fw['URL'])
 
                 timestamp = datetime.fromtimestamp(fw['Date']['Unix'] / 1000)
-                result.append({
-                    'component': component,
-                    'name': item['Title'],
-                    'version': item['SummaryInfo']['Version'],
-                    'date': str(timestamp),
-                    'file': fw['URL'],
-                })
+                result.append(
+                    {
+                        'component': component,
+                        'name': item['Title'],
+                        'version': item['SummaryInfo']['Version'],
+                        'date': str(timestamp),
+                        'file': fw['URL'],
+                    }
+                )
 
             except ValueError as e:
                 log.error('Invalid data format: {}'.format(e))

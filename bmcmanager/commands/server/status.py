@@ -13,13 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerGetCommand
+from bmcmanager.commands.base import (
+    BMCManagerServerCommand,
+    BMCManagerServerGetCommand,
+)
 
 
 class Get(BMCManagerServerGetCommand):
     """
     print server status
     """
+
     oob_method = 'status'
 
 
@@ -27,6 +31,7 @@ class Storage(BMCManagerServerCommand):
     """
     print server storage status
     """
+
     oob_method = 'storage_status'
 
 
@@ -34,6 +39,7 @@ class Controllers(BMCManagerServerCommand):
     """
     print server controllers status
     """
+
     oob_method = 'controllers_status'
 
 
@@ -41,4 +47,5 @@ class PDisks(BMCManagerServerCommand):
     """
     print server pdisks status
     """
+
     oob_method = 'controllers_status'

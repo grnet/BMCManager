@@ -20,6 +20,7 @@ class Enable(BMCManagerServerCommand):
     """
     enable server autoupdate
     """
+
     oob_method = 'autoupdate'
 
 
@@ -27,4 +28,5 @@ class Disable(BMCManagerServerCommand):
     """
     disable server autoupdate
     """
+
     oob_method = 'clear-autoupdate'

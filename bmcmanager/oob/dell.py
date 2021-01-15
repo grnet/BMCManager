@@ -29,9 +29,17 @@ class Dell(OobBase):
     def console(self):
         ipmi_host = self.oob_info['ipmi']
         try:
-            Popen(['moob', '-u', '{}'.format(self.username),
-                   '-p', '{}'.format(self.password),
-                   '-m', ipmi_host.replace('https://', '')])
+            Popen(
+                [
+                    'moob',
+                    '-u',
+                    '{}'.format(self.username),
+                    '-p',
+                    '{}'.format(self.password),
+                    '-m',
+                    ipmi_host.replace('https://', ''),
+                ]
+            )
         except OSError:
             print('Please run "gem install moob"')
             sys.exit(10)
@@ -87,26 +95,30 @@ class Dell(OobBase):
         time.sleep(180)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)
-        output = self._ssh('racadm techsupreport export -l {}'.format(
-            self.nfs_share))
+        output = self._ssh('racadm techsupreport export -l {}'.format(self.nfs_share))
         jid = self._find_jid(output)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)
 
     def autoupdate(self):
         enable_updates_output = self._ssh(
-            'racadm set lifecycleController.lcattributes.AutoUpdate Enabled')
+            'racadm set lifecycleController.lcattributes.AutoUpdate Enabled'
+        )
         schedule_updates_output = self._ssh(
             'racadm autoupdatescheduler create -l {} '
             '-f grnet_1.00_Catalog.xml -a 0 -time 08:30 '
-            '-dom * -wom * -dow * -rp 1'.format(self.http_share))
+            '-dom * -wom * -dow * -rp 1'.format(self.http_share)
+        )
         print(enable_updates_output)
         print(schedule_updates_output)
 
     def upgrade(self):
         http_addr = self.http_share.strip('http:/')
-        self._ssh('racadm update -f {} -e {} -t HTTP -a FALSE'.format(
-            'grnet_1.00_Catalog.xml', http_addr))
+        self._ssh(
+            'racadm update -f {} -e {} -t HTTP -a FALSE'.format(
+                'grnet_1.00_Catalog.xml', http_addr
+            )
+        )
 
     def idrac_info(self):
         firm_info = 'racadm get idrac.info'
