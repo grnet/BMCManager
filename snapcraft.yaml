@@ -15,13 +15,15 @@ parts:
     plugin: python
     python-version: python3
     source: .
+    build-environment:
+      - PBR_VERSION: $SNAPCRAFT_PROJECT_VERSION
     stage-packages:
       - freeipmi
       - ipmitool
 
 apps:
   bmcmanager:
-    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcm
+    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcmanager
     plugs: [home, network]
   ipmitool:
     command: usr/bin/ipmitool
