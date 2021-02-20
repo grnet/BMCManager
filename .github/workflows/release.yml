@@ -35,6 +35,7 @@ jobs:
             echo "::set-output name=secret::SNAPCRAFT_LOGIN"
             echo "::set-output name=channel::stable"
           fi
+          echo "version: '$VERSION'" >> snapcraft.yaml
       - name: Install Snapcraft with LXD
         uses: samuelmeuli/action-snapcraft@v1
         with:
