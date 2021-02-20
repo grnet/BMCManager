@@ -15,6 +15,8 @@ parts:
     plugin: python
     python-version: python3
     source: .
+    build-environment:
+      - PBR_VERSION: $SNAPCRAFT_PROJECT_VERSION
     stage-packages:
       - freeipmi
       - ipmitool
