@@ -25,6 +25,29 @@ jobs:
         with:
           username: cloudeng
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Configure snapcraft
+        id: snapcraft
+        run: |
+          if [[ $VERSION = *rc* ]]; then
+            echo "::set-output name=secret::SNAPCRAFT_LOGIN_RC"
+            echo "::set-output name=channel::candidate"
+          else
+            echo "::set-output name=secret::SNAPCRAFT_LOGIN"
+            echo "::set-output name=channel::stable"
+          fi
+      - name: Install Snapcraft with LXD
+        uses: samuelmeuli/action-snapcraft@v1
+        with:
+          use_lxd: true
+      - name: Build snap
+        working-directory: bmcmanager
+        run: sg lxd -c 'snapcraft --use-lxd'
+      - name: Login to Snapcraft
+        env:
+          SNAPCRAFT_LOGIN: "${{ secrets[steps.snapcraft.outputs.secret] }}"
+        run: snapcraft login --with <(printf "$SNAPCRAFT_LOGIN")
+      - name: Publish
+        run: snapcraft upload *.snap --release ${{ steps.snapcraft.outputs.channel }}
       - name: Docker Image
         id: docker_build
         uses: docker/build-push-action@v2
