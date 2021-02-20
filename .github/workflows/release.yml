@@ -40,7 +40,6 @@ jobs:
         with:
           use_lxd: true
       - name: Build snap
-        working-directory: bmcmanager
         run: sg lxd -c 'snapcraft --use-lxd'
       - name: Login to Snapcraft
         env:
