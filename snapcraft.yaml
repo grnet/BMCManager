@@ -21,7 +21,7 @@ parts:
 
 apps:
   bmcmanager:
-    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcm
+    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcmanager
     plugs: [home, network]
   ipmitool:
     command: usr/bin/ipmitool
