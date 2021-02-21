@@ -13,6 +13,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Install tox
+        run: |
+          python -m pip install -U pip
+          pip install tox
       - name: Retrieve build information
         run: |
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -58,16 +66,6 @@ jobs:
             cloudeng/bmcmanager:latest
       - name: Docker Image Digest
         run: echo ${{ steps.docker_build.outputs.digest }}
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-      - name: Install tox
-        run: |
-          python -m pip install -U pip
-          pip install tox
-      - name: Build and check packages
-        run: tox -e testpackages
       - name: Publish on PyPI
         run: tox -e publish -- -u __token__ -p "${{ secrets.PYPI_TOKEN }}"
       - name: Create GitHub Release

@@ -5,3 +5,4 @@
 bmcmanager.egg-info/*
 build/*
 dist/*
+scripts/bmcmanager-autocomplete.bash
