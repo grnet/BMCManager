@@ -6,6 +6,14 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v1.2.0] (2020-02-21)
+
+### Added
+
 - `bmcmanager server factory reset` command for Lenovo servers.
 
 ### Changed

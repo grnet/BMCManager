@@ -10,7 +10,7 @@
 
 ## Features
 
-`bmcmanager` features include and our not limited to:
+`bmcmanager` features include and are not limited to:
 
 - Manage SEL and IPMI sensor readings.
 - Get information for system RAM, disks, power status.
@@ -21,10 +21,12 @@
 - Manage NetBox secrets.
 - Configure unique IPMI credentials per server, store them as NetBox secrets and retrieve them automatically from NetBox.
 - Bash auto-completion.
-- Supports multiple output formats supported.
+- Command output in multiple output formats (table, json, csv, value).
 - (Expiremental) MaaS support. Match servers by hostname, and use MaaS IPMI credentials for all bmcmanager commands.
 
 ## Installation
+
+See [GitHub](https://github.com/grnet/bmcmanager/releases)
 
 ### Pip
 
@@ -54,12 +56,14 @@
 
 1. You can install `bmcmanager` as a snap package:
    ```bash
-   $ sudo snap install bmcmanager [--channel edge]
+   $ sudo snap install bmcmanager
    ```
 
 Notes:
 
+- The `stable` channel contains the latest stable release.
 - The `edge` channel always contains the latest successful `bmcmanager` build from the `master` branch.
+- The `candidate` channel contains the latest release candidate version.
 
 Snap Limitations:
 
