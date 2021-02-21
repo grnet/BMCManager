@@ -248,6 +248,8 @@ $ bmcmanager ipmi logs get --help
 
 ## Auto-completion
 
+>NOTE: Auto-completion is enabled by default when using the snap package.
+
 The `bmcmanager complete` generates a bash auto-completion script. You can use it directly:
 ```bash
 $ . <(bmcmanager complete)
