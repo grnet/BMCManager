@@ -19,6 +19,8 @@ jobs:
           pip install tox
       - name: Lint Python code
         run: tox -e lint
+      - name: Check Python code formatting
+        run: tox -e testfmt
       - name: Test binaries
         run: tox -e testbinary
       - name: Test packages
