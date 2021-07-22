@@ -15,4 +15,4 @@
 
 import logging
 
-log = logging.getLogger('bmcmanager')
+log = logging.getLogger("bmcmanager")

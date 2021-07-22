@@ -24,10 +24,10 @@ from bmcmanager.version import version_string
 class BMCManagerApp(App):
     def __init__(self):
         super(BMCManagerApp, self).__init__(
-            description='BMCManager',
+            description="BMCManager",
             version=version_string,
-            command_manager=CommandManager('bmcmanager.entrypoints'),
-            deferred_help=True
+            command_manager=CommandManager("bmcmanager.entrypoints"),
+            deferred_help=True,
         )
 
 
@@ -36,5 +36,5 @@ def main(argv=sys.argv[1:]):
     return m.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

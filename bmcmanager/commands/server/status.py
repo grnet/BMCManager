@@ -20,25 +20,29 @@ class Get(BMCManagerServerGetCommand):
     """
     print server status
     """
-    oob_method = 'status'
+
+    oob_method = "status"
 
 
 class Storage(BMCManagerServerCommand):
     """
     print server storage status
     """
-    oob_method = 'storage_status'
+
+    oob_method = "storage_status"
 
 
 class Controllers(BMCManagerServerCommand):
     """
     print server controllers status
     """
-    oob_method = 'controllers_status'
+
+    oob_method = "controllers_status"
 
 
 class PDisks(BMCManagerServerCommand):
     """
     print server pdisks status
     """
-    oob_method = 'controllers_status'
+
+    oob_method = "controllers_status"

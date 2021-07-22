@@ -20,11 +20,13 @@ class Local(BMCManagerServerCommand):
     """
     boot server from local disk
     """
-    oob_method = 'boot_local'
+
+    oob_method = "boot_local"
 
 
 class PXE(BMCManagerServerCommand):
     """
     boot server with PXE
     """
-    oob_method = 'boot_pxe'
+
+    oob_method = "boot_pxe"

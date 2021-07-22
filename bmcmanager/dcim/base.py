@@ -18,27 +18,28 @@ class DcimBase(object):
     """
     Base DCIM class
     """
+
     def __init__(self, args, config):
         self.args = args
         self.config = config
         self.identifier = args.server
         self.dcim_params = config
-        self.api_url = config['api_url']
-        self.is_rack = self.args.type == 'rack'
-        self.is_rack_unit = self.args.type == 'rack-unit'
-        self.is_serial = self.args.type == 'serial'
+        self.api_url = config["api_url"]
+        self.is_rack = self.args.type == "rack"
+        self.is_rack_unit = self.args.type == "rack-unit"
+        self.is_serial = self.args.type == "serial"
 
     def get_info(self):
-        raise NotImplementedError('get_info not implemented')
+        raise NotImplementedError("get_info not implemented")
 
     def get_oobs(self):
-        raise NotImplementedError('get_oobs not implemented')
+        raise NotImplementedError("get_oobs not implemented")
 
     def oob_url(self):
         raise NotImplementedError
 
     def supports_secrets(self):
-        return getattr(self, 'get_secret') is not None
+        return getattr(self, "get_secret") is not None
 
     def set_custom_fields(self, oob_info, custom_fields):
         return False

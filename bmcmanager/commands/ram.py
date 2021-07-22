@@ -20,18 +20,23 @@ class Get(BMCManagerServerGetCommand):
     """
     print server RAM
     """
-    oob_method = 'system_ram'
+
+    oob_method = "system_ram"
 
 
 class Check(BMCManagerServerCommand):
     """
     check server RAM [Nagios]
     """
-    oob_method = 'check_ram'
+
+    oob_method = "check_ram"
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--expected', type=int, default=None,
-            help='gb of RAM the server should have')
+            "--expected",
+            type=int,
+            default=None,
+            help="gb of RAM the server should have",
+        )
         return parser
