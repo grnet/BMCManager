@@ -29,17 +29,18 @@ from bmcmanager.errors import BMCManagerError
 from bmcmanager.logs import log
 from bmcmanager import exitcode
 
-README = 'https://github.com/grnet/BMCManager/blob/master/README.md'
+README = "https://github.com/grnet/BMCManager/blob/master/README.md"
 
 
 def int_in_range_argument(itt):
     """
     argparse integer in range
     """
+
     def argparse_type(value):
         ivalue = int(value)
         if ivalue not in itt:
-            msg = '{} out of valid range [{}..{}]'.format(value, min(itt), max(itt))
+            msg = "{} out of valid range [{}..{}]".format(value, min(itt), max(itt))
             raise argparse.ArgumentTypeError(msg)
         return ivalue
 
@@ -53,39 +54,34 @@ def json_argument(arg):
     try:
         return json.loads(arg)
     except json.JSONDecodeError as e:
-        raise argparse.ArgumentTypeError('invalid JSON') from e
+        raise argparse.ArgumentTypeError("invalid JSON") from e
 
 
 def base_arguments(parser):
     """
     Base bmcmanager arguments
     """
-    parser.add_argument(
-        '--config-file',
-        help='configuration file path',
-        default=''
-    )
+    parser.add_argument("--config-file", help="configuration file path", default="")
 
 
 def server_arguments(parser):
     """
     Add server selection arguments
     """
+    parser.add_argument("server", help="server name")
     parser.add_argument(
-        'server',
-        help='server name'
+        "-d",
+        "--dcim",
+        help="name of DCIM to use",
+        choices=["netbox", "maas"],
+        default="netbox",
     )
     parser.add_argument(
-        '-d', '--dcim',
-        help='name of DCIM to use',
-        choices=['netbox', 'maas'],
-        default='netbox',
-    )
-    parser.add_argument(
-        '-t', '--type',
-        help='unit type',
-        choices=['name', 'rack', 'rack-unit', 'serial'],
-        default='search'
+        "-t",
+        "--type",
+        help="unit type",
+        choices=["name", "rack", "rack-unit", "serial"],
+        default="search",
     )
 
 
@@ -94,11 +90,11 @@ def get_dcim(args, config):
     Get a configured DCIM from arguments and configuration
     """
     if args.dcim not in DCIMS:
-        raise RuntimeError(
-            'Unsupported DCIM "{}", see {}'.format(args.dcim, README))
+        raise RuntimeError('Unsupported DCIM "{}", see {}'.format(args.dcim, README))
     if args.dcim not in config:
         raise RuntimeError(
-            'No configuration for DCIM "{}", see {}'.format(args.dcim, README))
+            'No configuration for DCIM "{}", see {}'.format(args.dcim, README)
+        )
     return DCIMS[args.dcim](args, config[args.dcim])
 
 
@@ -106,32 +102,30 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
     """
     Get configuration for an OOB
     """
-    oob_name = oob_info['oob'].lower()
+    oob_name = oob_info["oob"].lower()
     try:
         oob_params = config[oob_name]
     except KeyError:
-        raise BMCManagerError('Invalid OOB name {}'.format(oob_name))
+        raise BMCManagerError("Invalid OOB name {}".format(oob_name))
 
     cfg = {
-        'username': oob_params.get('username'),
-        'password': oob_params.get('password'),
+        "username": oob_params.get("username"),
+        "password": oob_params.get("password"),
     }
-    if get_secret and dcim.supports_secrets() and 'credentials' in oob_params:
-        secret = dcim.get_secret(oob_params['credentials'], oob_info)
-        if secret['name']:
-            cfg['username'] = secret['name']
-        if secret['plaintext']:
-            cfg['password'] = secret['plaintext']
+    if get_secret and dcim.supports_secrets() and "credentials" in oob_params:
+        secret = dcim.get_secret(oob_params["credentials"], oob_info)
+        if secret["name"]:
+            cfg["username"] = secret["name"]
+        if secret["plaintext"]:
+            cfg["password"] = secret["plaintext"]
 
-    cfg['username'] = os.getenv('BMCMANAGER_USERNAME', cfg['username'])
-    cfg['password'] = os.getenv('BMCMANAGER_PASSWORD', cfg['password'])
+    cfg["username"] = os.getenv("BMCMANAGER_USERNAME", cfg["username"])
+    cfg["password"] = os.getenv("BMCMANAGER_PASSWORD", cfg["password"])
 
-    cfg['nfs_share'] = os.getenv(
-        'BMCMANAGER_NFS_SHARE', oob_params.get('nfs_share'))
-    cfg['http_share'] = os.getenv(
-        'BMCMANAGER_HTTP_SHARE', oob_params.get('http_share'))
+    cfg["nfs_share"] = os.getenv("BMCMANAGER_NFS_SHARE", oob_params.get("nfs_share"))
+    cfg["http_share"] = os.getenv("BMCMANAGER_HTTP_SHARE", oob_params.get("http_share"))
 
-    cfg['oob_params'] = oob_params
+    cfg["oob_params"] = oob_params
     return cfg
 
 
@@ -143,19 +137,19 @@ def bmcmanager_take_action(cmd, parsed_args):
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
         oob_config = get_oob_config(cmd.config, dcim, oob_info)
-        log.debug('Creating OOB object for {}'.format(oob_info['oob']))
+        log.debug("Creating OOB object for {}".format(oob_info["oob"]))
         try:
-            oob = OOBS.get(oob_info['oob'])(parsed_args, dcim, oob_config, oob_info)
+            oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
         except KeyError:
-            raise BMCManagerError('Invalid OOB {}'.format(oob_info['oob']))
+            raise BMCManagerError("Invalid OOB {}".format(oob_info["oob"]))
 
         try:
-            if hasattr(cmd, 'oob_method'):
+            if hasattr(cmd, "oob_method"):
                 return getattr(oob, cmd.oob_method)()
             else:
                 return cmd.action(oob)
         except Exception as e:
-            log.exception('Unhandled exception: {}'.format(e))
+            log.exception("Unhandled exception: {}".format(e))
 
     if idx is None:
         log.fatal('No servers found for "{}"'.format(parsed_args.server))
@@ -166,6 +160,7 @@ class BMCManagerServerCommand(Command):
     """
     base command for working with a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):
@@ -186,6 +181,7 @@ class BMCManagerServerGetCommand(ShowOne):
     """
     base command for retrieving information for a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):
@@ -205,6 +201,7 @@ class BMCManagerServerListCommand(Lister):
     """
     base command for retrieving a list of information for a server
     """
+
     dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):

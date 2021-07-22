@@ -18,6 +18,6 @@
 from setuptools import setup
 
 setup(
-    setup_requires=['pbr', 'tox', 'setuptools'],
+    setup_requires=["pbr", "tox", "setuptools"],
     pbr=True,
 )

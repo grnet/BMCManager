@@ -13,18 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerListCommand
+from bmcmanager.commands.base import (
+    BMCManagerServerCommand,
+    BMCManagerServerListCommand,
+)
 
 
 class Get(BMCManagerServerListCommand):
     """
     print IPMI sensor readings
     """
-    oob_method = 'ipmi_sensors'
+
+    oob_method = "ipmi_sensors"
 
 
 class Check(BMCManagerServerCommand):
     """
     check IPMI sensor readings [Nagios]
     """
-    oob_method = 'check_ipmi'
+
+    oob_method = "check_ipmi"

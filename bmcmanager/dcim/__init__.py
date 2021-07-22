@@ -17,6 +17,6 @@ from bmcmanager.dcim.netbox import Netbox
 from bmcmanager.dcim.maas import MaaS
 
 DCIMS = {
-    'netbox': Netbox,
-    'maas': MaaS,
+    "netbox": Netbox,
+    "maas": MaaS,
 }

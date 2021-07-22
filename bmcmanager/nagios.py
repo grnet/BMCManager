@@ -18,25 +18,25 @@ from bmcmanager import exitcode
 
 OK, WARNING, CRITICAL, UNKNOWN = range(4)
 RESULT = {
-    OK: 'OK',
-    WARNING: 'WARNING',
-    CRITICAL: 'CRITICAL',
-    UNKNOWN: 'UNKNOWN',
+    OK: "OK",
+    WARNING: "WARNING",
+    CRITICAL: "CRITICAL",
+    UNKNOWN: "UNKNOWN",
 }
 
 
-def result(status, msg, lines=[], perfdata=[], pre=''):
+def result(status, msg, lines=[], perfdata=[], pre=""):
     if isinstance(msg, list):
-        msg = ', '.join(msg)
+        msg = ", ".join(msg)
 
-    print('{} {}: {}'.format(pre, RESULT[status], msg).strip(), end='')
-    print(' |' if lines or perfdata else '')
+    print("{} {}: {}".format(pre, RESULT[status], msg).strip(), end="")
+    print(" |" if lines or perfdata else "")
 
     for line in lines:
-        print(line.replace('|', '/'))
+        print(line.replace("|", "/"))
 
     if perfdata:
-        print('| ', end='')
+        print("| ", end="")
 
     for perf in perfdata:
         print(perf)

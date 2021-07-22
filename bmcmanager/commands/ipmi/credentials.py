@@ -13,31 +13,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import (
-    BMCManagerServerCommand,
-    BMCManagerServerGetCommand
-)
+from bmcmanager.commands.base import BMCManagerServerCommand, BMCManagerServerGetCommand
 
 
 class Get(BMCManagerServerGetCommand):
     """
     print IPMI credentials
     """
-    oob_method = 'creds'
+
+    oob_method = "creds"
 
 
 class Set(BMCManagerServerCommand):
     """
     change user IPMI password
     """
-    oob_method = 'set_ipmi_password'
+
+    oob_method = "set_ipmi_password"
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument(
-            '--secret-role', type=str, required=False,
-            help='set the password as a NetBox secret with this role')
+            "--secret-role",
+            type=str,
+            required=False,
+            help="set the password as a NetBox secret with this role",
+        )
         parser.add_argument(
-            '--new-password', type=str, required=True,
-            help='new IPMI password')
+            "--new-password", type=str, required=True, help="new IPMI password"
+        )
         return parser

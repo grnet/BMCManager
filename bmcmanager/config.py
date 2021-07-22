@@ -37,27 +37,32 @@ def format_config(config):
 def get_config(config_path):
     try:
         extra_paths = []
-        if os.getenv('SNAP_COMMON'):
-            extra_paths.extend([os.path.expandvars('$SNAP_COMMON/bmcmanager')])
+        if os.getenv("SNAP_COMMON"):
+            extra_paths.extend([os.path.expandvars("$SNAP_COMMON/bmcmanager")])
 
-        if os.getenv('XDG_CONFIG_HOME'):
-            extra_paths.extend([
-                os.path.expandvars('$XDG_CONFIG_HOME/.config/bmcmanager'),
-                os.path.expandvars('$XDG_CONFIG_HOME/bmcmanager')])
+        if os.getenv("XDG_CONFIG_HOME"):
+            extra_paths.extend(
+                [
+                    os.path.expandvars("$XDG_CONFIG_HOME/.config/bmcmanager"),
+                    os.path.expandvars("$XDG_CONFIG_HOME/bmcmanager"),
+                ]
+            )
 
         config = configparser.ConfigParser()
-        which = config.read([
-            config_path,
-            os.getenv('BMCMANAGER_CONFIG', ''),
-            os.path.expanduser('~/.config/bmcmanager'),
-            '/etc/bmcmanager',
-            *extra_paths,
-        ])
+        which = config.read(
+            [
+                config_path,
+                os.getenv("BMCMANAGER_CONFIG", ""),
+                os.path.expanduser("~/.config/bmcmanager"),
+                "/etc/bmcmanager",
+                *extra_paths,
+            ]
+        )
 
-        log.debug('Loaded config from {}'.format(which))
+        log.debug("Loaded config from {}".format(which))
 
     except configparser.ParsingError as e:
-        log.error('Invalid configuration file: {}'.format(e))
+        log.error("Invalid configuration file: {}".format(e))
         sys.exit(1)
 
     return format_config(config)

@@ -16,6 +16,6 @@
 from bmcmanager.firmwares.lenovo import RD350, RD550
 
 firmware_fetchers = {
-    'thinkserver-rd350': RD350,
-    'thinkserver-rd550': RD550,
+    "thinkserver-rd350": RD350,
+    "thinkserver-rd550": RD550,
 }
