@@ -15,17 +15,20 @@
 
 
 from enum import Enum
+import logging
 import os
 import re
-from subprocess import Popen, check_output, CalledProcessError, call
+import subprocess
 import sys
+from time import sleep
 
 import paramiko
 
 from bmcmanager.interactive import posix_shell
 from bmcmanager.utils import firmware
 from bmcmanager import nagios
-from bmcmanager.logs import log
+
+LOG = logging.getLogger(__name__)
 
 if sys.platform == "darwin":
     BROWSER_OPEN = "open"
@@ -87,10 +90,10 @@ class OobBase(object):
         self.http_share = self.oob_config["http_share"]
 
     def _print(self, msg):
-        sys.stdout.write("{}:\n{}\n".format(self.oob_info["identifier"], msg))
+        # TODO: remove this, use normal log messages
+        LOG.info("[%s] %s", self.oob_info["identifier"], msg)
 
     def info(self):
-        log.debug("Executing info")
         info = self.oob_info["info"]
 
         columns = info.keys()
@@ -98,12 +101,13 @@ class OobBase(object):
 
         return columns, values
 
-    def _execute_popen(self, command):
-        log.debug("Executing {}".format(" ".join(command)))
-        try:
-            Popen(command)
-        except:
-            raise OobError("Could not open browser {}".format(" ".join(command)))
+    def _wait_for_machine_power_status(self, status: str):
+        while 1:
+            LOG.debug("Waiting for machine status %s", status)
+            if status in self._ipmitool(["chassis", "power", "status"]):
+                break
+
+            sleep(3)
 
     def _get_http_ipmi_host(self):
         ipmi_host = self.oob_info["ipmi"]
@@ -113,24 +117,22 @@ class OobBase(object):
         return ipmi_host
 
     def open(self):
-        self._execute_popen([BROWSER_OPEN, self._get_http_ipmi_host()])
+        self._check_call([BROWSER_OPEN, self._get_http_ipmi_host()])
 
     def ssh(self):
-        status_command = ["chassis", "power", "status"]
         if self.parsed_args.wait:
-            if "off" in self._execute(status_command, output=True):
-                log.info("Waiting for machine to turn on...")
+            self._wait_for_machine_power_status("on")
 
-            while 1:
-                if "off" not in self._execute(status_command, output=True):
-                    break
-
+        # TODO: the asset_tag should not be the primary address of the host
         host = self.oob_info["asset_tag"]
         if not host:
-            raise OobError("Cannot perform ssh without an asset tag")
-        call(["ssh", host])
+            LOG.fatal("No asset_tag defined for %s", self.oob_info["identifier"])
+            return
 
-    def _get_ipmi_tool_prefix(self):
+        self._check_call(["ssh", host])
+
+    # command is an array
+    def _ipmitool_cmd(self, command):
         host = self.oob_info["ipmi"].replace("https://", "")
         return [
             "ipmitool",
@@ -138,31 +140,16 @@ class OobBase(object):
             *command,
         ]
 
-    # command is an array
-    def _execute(self, command, output=False):
-        if not self.oob_info["ipmi"]:
-            log.warn("No IPMI field for {}".format(self.oob_info["oob"]))
-            return ""
+    def _ipmitool(self, command):
+        return self._check_output(self._ipmitool_cmd(command))
 
-        prefix = self._get_ipmi_tool_prefix()
-        command = prefix + command
+    def _check_call(self, command):
+        LOG.debug("Executing %s", command)
+        return subprocess.check_call(command)
 
-        return self._execute_cmd(command, output)
-
-    # command is an array
-    def _execute_cmd(self, command, output=False):
-        log.debug("Executing {}".format(" ".join(command)))
-        try:
-            if output:
-                return check_output(command).decode("utf-8")
-
-            call(command)
-        except CalledProcessError as e:
-            raise OobError("Command {} failed: {}".format(" ".join(command), str(e)))
-        except UnicodeError as e:
-            raise OobError(
-                "Decoding output of {} failed: {}".format(" ".join(command), str(e))
-            )
+    def _check_output(self, command):
+        LOG.debug("Executing %s", command)
+        return subprocess.check_output(command).decode("utf-8")
 
     def identify(self):
         if self.parsed_args.off:
@@ -170,12 +157,10 @@ class OobBase(object):
         else:
             arg = self.parsed_args.on or "force"
 
-        self._print(
-            self._execute(["chassis", "identify", str(arg)], output=True).strip()
-        )
+        self._print(self._ipmitool(["chassis", "identify", str(arg)]).strip())
 
     def status(self):
-        lines = self._execute(["chassis", "status"], output=True).strip().split("\n")
+        lines = self._ipmitool(["chassis", "status"]).strip().split("\n")
         columns, values = [], []
         for line in lines:
             try:
@@ -189,10 +174,10 @@ class OobBase(object):
         return columns, values
 
     def power_status(self):
-        self._print(self._execute(["chassis", "power", "status"], output=True).strip())
+        self._print(self._ipmitool(["chassis", "power", "status"]).strip())
 
     def power_on(self):
-        self._execute(["chassis", "power", "on"])
+        self._print(self._ipmitool(["chassis", "power", "on"]).strip())
 
     def power_off(self):
         cmd = ["chassis", "power"]
@@ -200,39 +185,29 @@ class OobBase(object):
             cmd.append("off")
         else:
             cmd.append("soft")
-        self._execute(cmd)
+
+        self._print(self._ipmitool(cmd))
         if self.parsed_args.wait:
-            while 1:
-                stdout = self._execute(["chassis", "power", "status"], output=True)
-                if "off" in stdout:
-                    break
+            self._wait_for_machine_power_status("off")
 
     def power_cycle(self):
-        self._execute(["chassis", "power", "cycle"])
+        self._print(self._ipmitool(["chassis", "power", "cycle"]))
 
     def power_reset(self):
-        self._execute(["chassis", "power", "reset"])
+        self._print(self._ipmitool(["chassis", "power", "reset"]))
 
     def boot_pxe(self):
-        self._execute(["chassis", "bootdev", "pxe"])
+        self._print(self._ipmitool(["chassis", "bootdev", "pxe"]))
 
     def boot_local(self):
-        self._execute(["chassis", "bootdev", "disk"])
+        self._print(self._ipmitool(["chassis", "bootdev", "disk"]))
 
     def ipmi_reset(self):
-        cmd = ["mc", "reset"]
-        if self.parsed_args.force:
-            cmd.append("cold")
-        else:
-            cmd.append("warm")
-
-        self._execute(cmd)
-
-    def _ipmi_logs_cmd(self, args=[]):
-        return ["sel", "list", *args]
+        cmd = ["mc", "reset", "cold" if self.parsed_args.force else "warm"]
+        self._print(self._ipmitool(cmd))
 
     def ipmi_logs(self):
-        lines = self._execute(self._ipmi_logs_cmd(), output=True).strip().split("\n")
+        lines = self._ipmitool(["sel", "list"]).strip().split("\n")
 
         columns = ["id", "date", "time", "name", "event", "state"]
         values = [list(map(str.strip, line.split("|"))) for line in lines]
@@ -240,7 +215,7 @@ class OobBase(object):
         return columns, values
 
     def clear_ipmi_logs(self):
-        self._print(self._execute(["sel", "clear"], output=True).strip())
+        self._print(self._ipmitool(["sel", "clear"]).strip())
 
     def console(self):
         raise NotImplementedError("console")
@@ -324,7 +299,7 @@ class OobBase(object):
     def ipmi_sensors(self):
         host = self.oob_info["ipmi"].replace("https://", "")
         cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
-        lines = self._execute_cmd(cmd, output=True).strip().split("\n")
+        lines = self._check_output(cmd).strip().split("\n")
         columns = list(map(str.strip, lines[0].split("|")))
         values = [list(map(str.strip, line.split("|"))) for line in lines[1:]]
 
@@ -389,7 +364,7 @@ class OobBase(object):
 
     def _get_sel_errors(self, host):
         cmd = self._ipmi_sel_cmd(host, self.username, self.password)
-        logs = self._execute_cmd(cmd, output=True)
+        logs = self._check_output(cmd)
         for line in reversed(logs.split("\n")[1:-1]):
             split = list(map(lambda x: x.strip(), line.split("|")))
             if split[IPMISelOutput.STATE] != "Nominal":
@@ -414,8 +389,9 @@ class OobBase(object):
         perfdata = []
         cmd = self._ipmi_dcmi_cmd(host, self.username, self.password)
         try:
-            dcmi_output = self._execute_cmd(cmd, output=True)
-        except OobError:
+            dcmi_output = self._check_output(cmd)
+        except Exception as e:
+            LOG.exception(e)
             nagios.result(nagios.UNKNOWN, "ipmi-dcmi failed", pre=pre)
             return
 
@@ -427,8 +403,9 @@ class OobBase(object):
 
         cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
         try:
-            sensors = self._execute_cmd(cmd, output=True)
-        except OobError:
+            sensors = self._check_output(cmd)
+        except Exception as e:
+            LOG.exception(e)
             nagios.result(nagios.UNKNOWN, "ipmi-sensors failed", pre=pre)
             return
 
@@ -541,7 +518,7 @@ class OobBase(object):
 
     def get_secrets(self):
         if not self.dcim.supports_secrets():
-            log.fatal("Secrets not supported by DCIM")
+            LOG.fatal("Secrets not supported by DCIM")
 
         secrets = self.dcim.get_secrets(self.oob_info["info"])
 
@@ -551,7 +528,7 @@ class OobBase(object):
 
     def set_secret(self):
         if not self.dcim.supports_secrets():
-            log.fatal("Secrets not supported by DCIM")
+            LOG.fatal("Secrets not supported by DCIM")
 
         r = self.dcim.set_secret(
             self.parsed_args.secret_role,
@@ -564,12 +541,12 @@ class OobBase(object):
             self._print("Error {}".format(r.text))
 
     def ipmitool(self):
-        self._execute(self.parsed_args.args)
+        self._check_call(self._ipmitool_cmd(self.parsed_args.args))
 
     def set_ipmi_password(self):
         args = self.parsed_args
 
-        stdout = self._execute(["user", "list"], output=True).split("\n")
+        stdout = self._ipmitool(["user", "list"]).split("\n")
         header = stdout[0]
         name_start = header.find("Name")
         found = False
@@ -579,18 +556,14 @@ class OobBase(object):
 
             if username == self.username:
                 found = True
-                log.debug("ID of user {} is {}".format(username, uid))
+                LOG.debug("ID of user {} is {}".format(username, uid))
                 break
 
         if not found:
             self._print("User {} not found".format(self.username))
             return
 
-        self._print(
-            self._execute(
-                ["user", "set", "password", uid, args.new_password], output=True
-            )
-        )
+        self._print(self._ipmitool(["user", "set", "password", uid, args.new_password]))
 
         if args.secret_role is not None:
             self._print("Updating {} NetBox secret".format(args.secret_role))
@@ -598,8 +571,8 @@ class OobBase(object):
                 args.secret_role, self.oob_info["info"], username, args.new_password
             )
             if r.status_code >= 300:
-                log.critical("Setting NetBox secret failed")
-                log.critical("Error {}:\n{}".format(r.status_code, r.text))
+                LOG.critical("Setting NetBox secret failed")
+                LOG.critical("Error {}:\n{}".format(r.status_code, r.text))
             else:
                 self._print("Successfully updated secret")
 
@@ -626,14 +599,14 @@ class OobBase(object):
         }.get(args.address_type)
 
         if regex is None:
-            log.error("Unknown address type: {}".format(args.address_type))
+            LOG.error("Unknown address type: {}".format(args.address_type))
             return ""
 
-        stdout = self._execute(["lan", "print"], output=True)
+        stdout = self._ipmitool(["lan", "print"])
 
         m = next(re.finditer(regex, stdout, re.MULTILINE), None)
         if m is None:
-            log.error("No IPMI address found")
+            LOG.error("No IPMI address found")
             return
 
         addr = m.group("addr")
@@ -649,17 +622,13 @@ class OobBase(object):
     def refresh_ipmi_address(self):
         addr = self._get_ipmi_address()
         custom_fields = {"IPMI": addr}
-        log.info("Patching custom fields: {}".format(custom_fields))
+        LOG.info("Patching custom fields: {}".format(custom_fields))
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
-            log.error("Failed to refresh IPMI")
+            LOG.error("Failed to refresh IPMI")
 
     def get_ipmi_address(self):
         addr = self._get_ipmi_address()
         return ("address",), (addr,)
 
     def open_dcim(self):
-        self._execute_popen([BROWSER_OPEN, self.dcim.oob_url(self.oob_info)])
-
-
-class OobError(Exception):
-    pass
+        self._check_call([BROWSER_OPEN, self.dcim.oob_url(self.oob_info)])

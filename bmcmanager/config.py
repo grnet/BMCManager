@@ -14,10 +14,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import configparser
+import logging
 import os
 import sys
 
-from bmcmanager.logs import log
+LOG = logging.getLogger(__name__)
+
 
 
 def format_config(config):
@@ -59,10 +61,10 @@ def get_config(config_path):
             ]
         )
 
-        log.debug("Loaded config from {}".format(which))
+        LOG.debug("Loaded config from {}".format(which))
 
     except configparser.ParsingError as e:
-        log.error("Invalid configuration file: {}".format(e))
+        LOG.error("Invalid configuration file: {}".format(e))
         sys.exit(1)
 
     return format_config(config)

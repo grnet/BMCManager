@@ -13,16 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
+import logging
+import paramiko
 import re
 import sys
 import time
-import paramiko
-
 from subprocess import Popen
 
 from bmcmanager.oob.base import OobBase
-from bmcmanager.logs import log
+
+LOG = logging.getLogger(__name__)
 
 
 class Dell(OobBase):
@@ -40,8 +40,8 @@ class Dell(OobBase):
                     ipmi_host.replace("https://", ""),
                 ]
             )
-        except OSError:
-            print('Please run "gem install moob"')
+        except OSError as e:
+            LOG.exception('Please run "gem install moob"')
             sys.exit(10)
 
     def _ssh(self, command):
@@ -91,7 +91,7 @@ class Dell(OobBase):
         jobqueue_view = "racadm jobqueue view -i {}"
         output = self._ssh("racadm techsupreport collect")
         jid = self._find_jid(output)
-        log.info("Sleeping for 3 minutes to collect the TSR report")
+        LOG.info("Sleeping for 3 minutes to collect the TSR report")
         time.sleep(180)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)

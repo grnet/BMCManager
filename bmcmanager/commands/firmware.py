@@ -14,10 +14,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
+import logging
 import os
+import subprocess
 import sys
 import urllib.request
-from subprocess import call, CalledProcessError
 
 from cliff.lister import Lister
 from cliff.command import Command
@@ -28,8 +29,9 @@ from bmcmanager.commands.base import (
     BMCManagerServerListCommand,
     int_in_range_argument,
 )
-from bmcmanager.logs import log
 from bmcmanager.firmwares import firmware_fetchers
+
+LOG = logging.getLogger(__name__)
 
 
 class Get(BMCManagerServerListCommand):
@@ -142,21 +144,16 @@ class LatestGet(Lister):
         )
         return parser
 
-    def _execute_cmd(self, command):
-        log.debug("Executing {}".format(" ".join(command)))
-        try:
-            call(command)
-        except CalledProcessError as e:
-            raise RuntimeError(
-                "Command {} failed: {}".format(" ".join(command), str(e))
-            )
+    def _check_output(self, command):
+        LOG.debug("Executing {}".format(" ".join(command)))
+        subprocess.check_call(command)
 
     def take_action(self, parsed_args):
         try:
             fetcher = firmware_fetchers[parsed_args.model]
 
         except KeyError as e:
-            log.error("Unsupported device type: {}".format(e))
+            LOG.error("Unsupported device type: {}".format(e))
             sys.exit(-1)
 
         result, downloads = fetcher().get()
@@ -170,22 +167,22 @@ class LatestGet(Lister):
         try:
             os.makedirs(parsed_args.download_to, exist_ok=True)
         except OSError as e:
-            log.error("Could not create download directory: {}".format(e))
+            LOG.error("Could not create download directory: {}".format(e))
             sys.exit(-1)
 
         for url in downloads:
             name = url[url.rfind("/") + 1 :]
             file_name = os.path.join(parsed_args.download_to, name)
-            log.info("Downloading {} to {}".format(url, file_name))
+            LOG.info("Downloading {} to {}".format(url, file_name))
             try:
                 with open(file_name, "wb") as fout:
                     fout.write(urllib.request.urlopen(url).read())
             except (urllib.error.URLError, OSError) as e:
-                log.error("Failed: {}".format(e))
+                LOG.error("Failed: {}".format(e))
 
             if parsed_args.innoextract and name.endswith(".exe"):
-                log.info("Extracting with innoextract")
-                self._execute_cmd(
+                LOG.info("Extracting with innoextract")
+                self._check_output(
                     ["innoextract", file_name, "-d", parsed_args.download_to]
                 )
 
@@ -217,7 +214,7 @@ class LatestCheck(Command):
             fetcher = firmware_fetchers[parsed_args.model]
 
         except KeyError as e:
-            log.error("Unsupported device type: {}".format(e))
+            LOG.error("Unsupported device type: {}".format(e))
             sys.exit(-1)
 
         result, _ = fetcher().get()
