@@ -49,18 +49,18 @@ class MaaS(DcimBase):
         return self._session
 
     def _get_manufacturer(self, machine_data: dict) -> str:
-        mainboard_vendor = machine_data["hardware_info"]["mainboard_vendor"]
-        if mainboard_vendor.lower() != "unknown":
+        mainboard_vendor = machine_data["hardware_info"]["mainboard_vendor"].lower()
+        if mainboard_vendor != "unknown":
             return mainboard_vendor
 
-        return machine_data["hardware_info"]["system_vendor"]
+        return machine_data["hardware_info"]["system_vendor"].lower()
 
     def _get_device_type(self, machine_data: dict) -> str:
-        mainboard_product = machine_data["hardware_info"]["mainboard_product"]
-        if mainboard_product.lower() != "unknown":
+        mainboard_product = machine_data["hardware_info"]["mainboard_product"].lower()
+        if mainboard_product != "unknown":
             return mainboard_product
 
-        return machine_data["hardware_info"]["system_product"]
+        return machine_data["hardware_info"]["system_product"].lower()
 
     def get_oobs(self):
         for machine in self.session().Machines.read(hostname=[self.identifier]):
@@ -70,7 +70,7 @@ class MaaS(DcimBase):
             yield {
                 "asset_tag": "",
                 "ipmi": power["power_address"],
-                "oob": machine["hardware_info"]["mainboard_vendor"].lower(),
+                "oob": self._get_manufacturer(machine),
                 "info": {
                     "id": machine["system_id"],
                     "name": machine["hostname"],
