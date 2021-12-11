@@ -44,6 +44,24 @@ class DcimBase(object):
     def set_custom_fields(self, oob_info, custom_fields):
         return False
 
+    def format_ipmitool_credentials(self, host, username, password) -> List[str]:
+        # TODO: host, username, password should not be an argument
+        return ["-H", host, "-U", username, "-P", password, "-I", "lanplus"]
+
+    def format_freeipmi_credentials(self, host, username, password) -> List[str]:
+        # TODO: host, username, password should not be an argument
+        return [
+            "-h",
+            host,
+            "-u",
+            username,
+            "-p",
+            password,
+            "-l",
+            "user",
+            "--driver-type=LAN_2_0",
+        ]
+
 
 class DcimError(Exception):
     pass

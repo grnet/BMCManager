@@ -134,14 +134,8 @@ class OobBase(object):
         host = self.oob_info["ipmi"].replace("https://", "")
         return [
             "ipmitool",
-            "-U",
-            self.username,
-            "-P",
-            self.password,
-            "-I",
-            "lanplus",
-            "-H",
-            host,
+            *self.dcim.format_ipmitool_credentials(host, self.username, self.password),
+            *command,
         ]
 
     # command is an array
@@ -297,20 +291,12 @@ class OobBase(object):
 
         return [
             "ipmi-sensors",
-            "-h",
-            host,
-            "-u",
-            username,
-            "-p",
-            password,
-            "-l",
-            "user",
+            *self.dcim.format_freeipmi_credentials(host, username, password),
             "--quiet-cache",
             "--sdr-cache-recreate",
             "--interpret-oem-data",
             "--output-sensor-state",
             "--ignore-not-available-sensors",
-            "--driver-type=LAN_2_0",
             "--output-sensor-thresholds",
             *args,
         ]
@@ -318,15 +304,7 @@ class OobBase(object):
     def _ipmi_sel_cmd(self, host, username, password, args=[]):
         return [
             "ipmi-sel",
-            "-h",
-            host,
-            "-u",
-            username,
-            "-p",
-            password,
-            "-l",
-            "user",
-            "--driver-type=LAN_2_0",
+            *self.dcim.format_freeipmi_credentials(host, username, password),
             "--output-event-state",
             "--interpret-oem-data",
             "--entity-sensor-names",
@@ -338,15 +316,7 @@ class OobBase(object):
     def _ipmi_dcmi_cmd(self, host, username, password, args=[]):
         return [
             "ipmi-dcmi",
-            "-h",
-            host,
-            "-u",
-            username,
-            "-p",
-            password,
-            "-l",
-            "user",
-            "--driver-type=LAN_2_0",
+            *self.dcim.format_freeipmi_credentials(host, username, password),
             "--get-system-power-statistics",
             *args,
         ]
@@ -515,7 +485,7 @@ class OobBase(object):
         nagios.result(status, msg or "SEL, Sensors OK", lines, perfdata, pre)
 
     def creds(self):
-        ipmi = (self.oob_info["ipmi"] or "").replace("https://", "")
+        ipmi = self.oob_info["ipmi"].replace("https://", "")
         columns = ("address", "username", "password")
         values = (ipmi, self.username, self.password)
         return columns, values
