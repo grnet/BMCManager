@@ -15,8 +15,11 @@ parts:
     plugin: python
     python-version: python3
     source: .
-    build-environment:
-      - PBR_VERSION: $SNAPCRAFT_PROJECT_VERSION
+    override-build: |
+      if [ test "x$SNAPCRAFT_PROJECT_VERSION" != "xgit" ]; then
+        export PBR_VERSION=$SNAPCRAFT_PROJECT_VERSION
+      fi
+      snapcraftctl build
     stage-packages:
       - freeipmi
       - ipmitool
