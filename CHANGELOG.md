@@ -6,10 +6,12 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- MaaS DCIM is now stable.
 - Configure multiple DCIMs in the same config file, even multiple sites of the same type (e.g. multiple NetBox DCIMs).
 - Configure a default OOB (by default falls back to the base OOB, using universal ipmi commands).
 - Ability to write new dcims as plugins.
   - Implement your custom plugins extending `bmcmanager.dcim.base.DcimBase` and add an entrypoint under `bmcmanager.dcim`.
+- Add new `local` DCIM (all bmcmanager commands are executing ipmitool and freeipmi-tools locally on the host).
 
 ### Changed
 
