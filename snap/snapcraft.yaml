@@ -2,7 +2,7 @@ name: bmcmanager
 version: git
 summary: bmcmanager
 description: BMCManager tool
-base: core18
+base: core20
 confinement: strict
 grade: stable
 license: GPL-3.0
@@ -13,10 +13,11 @@ architectures:
 parts:
   bmcmanager:
     plugin: python
-    python-version: python3
+    #python-version: python3
     source: .
     override-build: |
-      if [ test "x$SNAPCRAFT_PROJECT_VERSION" != "xgit" ]; then
+      set -eox
+      if [ "x$SNAPCRAFT_PROJECT_VERSION" != "xgit" ]; then
         export PBR_VERSION=$SNAPCRAFT_PROJECT_VERSION
       fi
       snapcraftctl build
@@ -26,10 +27,15 @@ parts:
   completer:
     plugin: nil
     override-prime: bmcmanager complete > bmcmanager-autocomplete.bash
+  wrapper:
+    plugin: dump
+    source: ./scripts/
+    organize:
+      scripts/bmcmanager.wrapper: usr/bin/bmcmanager.wrapper
 
 apps:
   bmcmanager:
-    command: env XDG_CACHE_HOME=$SNAP_USER_COMMON XDG_CONFIG_HOME=$SNAP_USER_COMMON PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin $SNAP/bin/bmcmanager
+    command: bmcmanager.wrapper
     plugs: [home, network]
     completer: bmcmanager-autocomplete.bash
   ipmitool:
