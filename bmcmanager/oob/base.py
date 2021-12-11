@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+from enum import Enum
 import os
 import re
 from subprocess import Popen, check_output, CalledProcessError, call
@@ -32,24 +33,38 @@ else:
     BROWSER_OPEN = "xdg-open"
 
 # Column indexes for ipmi-sel output
-SEL_ID, SEL_DATE, SEL_TIME, SEL_NAME, SEL_TYPE, SEL_STATE, SEL_EVENT = range(7)
+class IPMISelOutput(Enum):
+    """
+    Column indices for ipmi-sel output.
+    """
 
-# Column indexes for ipmi-sensors output
-(
-    SSR_ID,
-    SSR_NAME,
-    SSR_TYPE,
-    SSR_STATE,
-    SSR_VALUE,
-    SSR_UNIT,
-    _,
-    SSR_CRITL,
-    SSR_WARNL,
-    SSR_WARNH,
-    SSR_CRITH,
-    _,
-    SSR_DESC,
-) = range(13)
+    ID = 0
+    DATE = 1
+    TIME = 2
+    NAME = 3
+    TYPE = 4
+    STATE = 5
+    EVENT = 6
+
+
+class IPMISensorsOutput(Enum):
+    """
+    Column indices for ipmi-sensors output
+    """
+
+    ID = 0
+    NAME = 1
+    TYPE = 2
+    STATE = 3
+    VALUE = 4
+    UNIT = 5
+    # UNUSED_1 = 6
+    CRITL = 7
+    WARNL = 8
+    WARNH = 9
+    CRITH = 10
+    # UNUNSED_2 = 11
+    DESC = 12
 
 
 class OobBase(object):
@@ -349,7 +364,14 @@ class OobBase(object):
         return "- " + " | ".join(
             [
                 sensor[x]
-                for x in [SSR_ID, SSR_TYPE, SSR_NAME, SSR_VALUE, SSR_UNIT, SSR_DESC]
+                for x in [
+                    IPMISensorsOutput.ID,
+                    IPMISensorsOutput.TYPE,
+                    IPMISensorsOutput.NAME,
+                    IPMISensorsOutput.VALUE,
+                    IPMISensorsOutput.UNIT,
+                    IPMISensorsOutput.DESC,
+                ]
             ]
         )
 
@@ -357,22 +379,24 @@ class OobBase(object):
         return "" if x == "N/A" else x
 
     def _format_sensor_perfdata(self, sensor):
-        if sensor[SSR_VALUE] == "N/A":
+        if sensor[IPMISensorsOutput.VALUE] == "N/A":
             return ""
 
         warning = ""
-        warning_low = self.__clear_na(sensor[SSR_WARNL])
-        warning_high = self.__clear_na(sensor[SSR_WARNH])
+        warning_low = self.__clear_na(sensor[IPMISensorsOutput.WARNL])
+        warning_high = self.__clear_na(sensor[IPMISensorsOutput.WARNH])
         if warning_low or warning_high:
             warning = "{}:{}".format(warning_low, warning_high)
 
         critical = ""
-        critical_low = self.__clear_na(sensor[SSR_CRITL])
-        critical_high = self.__clear_na(sensor[SSR_CRITH])
+        critical_low = self.__clear_na(sensor[IPMISensorsOutput.CRITL])
+        critical_high = self.__clear_na(sensor[IPMISensorsOutput.CRITH])
         if critical_low or critical_high:
             critical = "{}:{}".format(critical_low, critical_high)
 
-        result = "'{}'={}".format(sensor[SSR_NAME], sensor[SSR_VALUE])
+        result = "'{}'={}".format(
+            sensor[IPMISensorsOutput.NAME], sensor[IPMISensorsOutput.VALUE]
+        )
         if warning or critical:
             result = "{};{};{}".format(result, warning, critical)
 
@@ -382,7 +406,14 @@ class OobBase(object):
         return "- " + " | ".join(
             [
                 sel[x]
-                for x in [SEL_ID, SEL_DATE, SEL_TIME, SEL_TYPE, SEL_NAME, SEL_EVENT]
+                for x in [
+                    IPMISelOutput.ID,
+                    IPMISelOutput.DATE,
+                    IPMISelOutput.TIME,
+                    IPMISelOutput.TYPE,
+                    IPMISelOutput.NAME,
+                    IPMISelOutput.EVENT,
+                ]
             ]
         )
 
@@ -391,14 +422,14 @@ class OobBase(object):
         logs = self._execute_cmd(cmd, output=True)
         for line in reversed(logs.split("\n")[1:-1]):
             split = list(map(lambda x: x.strip(), line.split("|")))
-            if split[SEL_STATE] != "Nominal":
+            if split[IPMISelOutput.STATE] != "Nominal":
                 yield split
 
     def _sel_is_firmware_upgrade(self, line):
         checks = {
-            SEL_DATE: "PostInit",
-            SEL_TIME: "PostInit",
-            SEL_TYPE: "Version Change",
+            IPMISelOutput.DATE: "PostInit",
+            IPMISelOutput.TIME: "PostInit",
+            IPMISelOutput.TYPE: "Version Change",
         }
         return all(line[k] == v for k, v in checks.items())
 
@@ -440,9 +471,9 @@ class OobBase(object):
             if data:
                 perfdata.append(data)
 
-            if split[SSR_STATE] in ["Nominal", "N/A"]:
+            if split[IPMISensorsOutput.STATE] in ["Nominal", "N/A"]:
                 continue
-            elif split[SSR_STATE] == "Warning":
+            elif split[IPMISensorsOutput.STATE] == "Warning":
                 sensor_warnings.append(split)
             else:
                 sensor_errors.append(split)
