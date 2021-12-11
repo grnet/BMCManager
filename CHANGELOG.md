@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 ### Fixed
 
+- Manufacturer and device type being reported as `unknown` for MaaS servers.
+
 ## [v1.2.0] (2020-02-21)
 
 ### Added

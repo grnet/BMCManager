@@ -45,6 +45,20 @@ class MaaS(DcimBase):
 
         return self._session
 
+    def _get_manufacturer(self, machine_data: dict) -> str:
+        mainboard_vendor = machine_data["hardware_info"]["mainboard_vendor"]
+        if mainboard_vendor.lower() != "unknown":
+            return mainboard_vendor
+
+        return machine_data["hardware_info"]["system_vendor"]
+
+    def _get_device_type(self, machine_data: dict) -> str:
+        mainboard_product = machine_data["hardware_info"]["mainboard_product"]
+        if mainboard_product.lower() != "unknown":
+            return mainboard_product
+
+        return machine_data["hardware_info"]["system_product"]
+
     def get_oobs(self):
         for machine in self.session().Machines.read(hostname=[self.identifier]):
             power = self.session().Machine.power_parameters(
@@ -60,8 +74,8 @@ class MaaS(DcimBase):
                     "display_name": machine["hostname"],
                     "serial": machine["hardware_info"]["system_serial"],
                     "ipmi": power["power_address"],
-                    "manufacturer": machine["hardware_info"]["mainboard_vendor"],
-                    "device_type": machine["hardware_info"]["mainboard_product"],
+                    "manufacturer": self._get_manufacturer(machine),
+                    "device_type": self._get_device_type(machine),
                     "bios": machine["owner_data"].get("BIOS", ""),
                     "tsm": machine["owner_data"].get("TSM", ""),
                     "psu": machine["owner_data"].get("PSU", ""),
