@@ -310,12 +310,12 @@ class OobBase(object):
             [
                 sensor[x]
                 for x in [
-                    IPMISensorsOutput.ID,
-                    IPMISensorsOutput.TYPE,
-                    IPMISensorsOutput.NAME,
-                    IPMISensorsOutput.VALUE,
-                    IPMISensorsOutput.UNIT,
-                    IPMISensorsOutput.DESC,
+                    IPMISensorsOutput.ID.value,
+                    IPMISensorsOutput.TYPE.value,
+                    IPMISensorsOutput.NAME.value,
+                    IPMISensorsOutput.VALUE.value,
+                    IPMISensorsOutput.UNIT.value,
+                    IPMISensorsOutput.DESC.value,
                 ]
             ]
         )
@@ -324,23 +324,23 @@ class OobBase(object):
         return "" if x == "N/A" else x
 
     def _format_sensor_perfdata(self, sensor):
-        if sensor[IPMISensorsOutput.VALUE] == "N/A":
+        if sensor[IPMISensorsOutput.VALUE.value] == "N/A":
             return ""
 
         warning = ""
-        warning_low = self.__clear_na(sensor[IPMISensorsOutput.WARNL])
-        warning_high = self.__clear_na(sensor[IPMISensorsOutput.WARNH])
+        warning_low = self.__clear_na(sensor[IPMISensorsOutput.WARNL.value])
+        warning_high = self.__clear_na(sensor[IPMISensorsOutput.WARNH.value])
         if warning_low or warning_high:
             warning = "{}:{}".format(warning_low, warning_high)
 
         critical = ""
-        critical_low = self.__clear_na(sensor[IPMISensorsOutput.CRITL])
-        critical_high = self.__clear_na(sensor[IPMISensorsOutput.CRITH])
+        critical_low = self.__clear_na(sensor[IPMISensorsOutput.CRITL.value])
+        critical_high = self.__clear_na(sensor[IPMISensorsOutput.CRITH.value])
         if critical_low or critical_high:
             critical = "{}:{}".format(critical_low, critical_high)
 
         result = "'{}'={}".format(
-            sensor[IPMISensorsOutput.NAME], sensor[IPMISensorsOutput.VALUE]
+            sensor[IPMISensorsOutput.NAME.value], sensor[IPMISensorsOutput.VALUE.value]
         )
         if warning or critical:
             result = "{};{};{}".format(result, warning, critical)
@@ -352,12 +352,12 @@ class OobBase(object):
             [
                 sel[x]
                 for x in [
-                    IPMISelOutput.ID,
-                    IPMISelOutput.DATE,
-                    IPMISelOutput.TIME,
-                    IPMISelOutput.TYPE,
-                    IPMISelOutput.NAME,
-                    IPMISelOutput.EVENT,
+                    IPMISelOutput.ID.value,
+                    IPMISelOutput.DATE.value,
+                    IPMISelOutput.TIME.value,
+                    IPMISelOutput.TYPE.value,
+                    IPMISelOutput.NAME.value,
+                    IPMISelOutput.EVENT.value,
                 ]
             ]
         )
@@ -367,14 +367,14 @@ class OobBase(object):
         logs = self._check_output(cmd)
         for line in reversed(logs.split("\n")[1:-1]):
             split = list(map(lambda x: x.strip(), line.split("|")))
-            if split[IPMISelOutput.STATE] != "Nominal":
+            if split[IPMISelOutput.STATE.value] != "Nominal":
                 yield split
 
     def _sel_is_firmware_upgrade(self, line):
         checks = {
-            IPMISelOutput.DATE: "PostInit",
-            IPMISelOutput.TIME: "PostInit",
-            IPMISelOutput.TYPE: "Version Change",
+            IPMISelOutput.DATE.value: "PostInit",
+            IPMISelOutput.TIME.value: "PostInit",
+            IPMISelOutput.TYPE.value: "Version Change",
         }
         return all(line[k] == v for k, v in checks.items())
 
@@ -418,9 +418,9 @@ class OobBase(object):
             if data:
                 perfdata.append(data)
 
-            if split[IPMISensorsOutput.STATE] in ["Nominal", "N/A"]:
+            if split[IPMISensorsOutput.STATE.value] in ["Nominal", "N/A"]:
                 continue
-            elif split[IPMISensorsOutput.STATE] == "Warning":
+            elif split[IPMISensorsOutput.STATE.value] == "Warning":
                 sensor_warnings.append(split)
             else:
                 sensor_errors.append(split)
