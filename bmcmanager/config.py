@@ -61,10 +61,10 @@ def get_config(config_path):
             ]
         )
 
-        LOG.debug("Loaded config from {}".format(which))
+        LOG.debug("Loaded config from %s", which)
 
     except configparser.ParsingError as e:
-        LOG.error("Invalid configuration file: {}".format(e))
+        LOG.error("Invalid configuration file: %s", e)
         sys.exit(1)
 
     return format_config(config)

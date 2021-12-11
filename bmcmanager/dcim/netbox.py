@@ -14,13 +14,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import sys
+import logging
 import os
 
 import requests
 
-from bmcmanager.logs import log
 from bmcmanager.dcim.base import DcimBase, DcimError
+
+LOG = logging.getLogger(__name__)
 
 
 class Netbox(DcimBase):
@@ -32,7 +33,7 @@ class Netbox(DcimBase):
             timeout = self.dcim_params.get("timeout", self.timeout)
             self.timeout = int(timeout)
         except (TypeError, ValueError):
-            log.warning("Ignoring invalid timeout: {}".format(timeout))
+            LOG.warning("Ignoring invalid timeout %s", timeout)
 
         self.device_type_ids = None
         raw_ids = self.dcim_params.get("device_type_id")
@@ -43,7 +44,7 @@ class Netbox(DcimBase):
                     map(int, map(str.strip, raw_ids.split(",")))
                 )
             except (TypeError, ValueError):
-                log.warning("Ignoring invalid device type ids: {}".format(raw_ids))
+                LOG.warning("Ignoring invalid device type ids %s", raw_ids)
 
         self.info = self._retrieve_info()
 
@@ -61,18 +62,15 @@ class Netbox(DcimBase):
         return params
 
     def _get_rack_id(self):
-        log.debug("Querying the Netbox API for rack {}".format(self.identifier))
+        LOG.debug("Querying the Netbox API for %s", self.identifier)
         url = os.path.join(self.api_url, "api/dcim/racks/")
         params = {"name": self.identifier}
         json_response = self._do_request(url, params)
 
-        log.debug("Decoding the response")
         # we expect the response to be a json object
         response = json_response.json()
         if len(response["results"]) != 1:
-            raise DcimError(
-                "Did not find valid results for rack {}".format(self.identifier)
-            )
+            raise DcimError("Did not find valid results for {}".format(self.identifier))
         return response["results"][0]["id"]
 
     def _get_headers(self, with_session_key=False):
@@ -92,24 +90,22 @@ class Netbox(DcimBase):
     def _do_request(self, url, params, with_session_key=False, method="get"):
         headers = self._get_headers(with_session_key)
 
-        log.debug(
-            "HTTP {} {}, {}, {}".format(method.upper(), url, str(params), str(headers))
-        )
+        LOG.debug("HTTP %s %s %s %s", method.upper(), url, str(params), str(headers))
+
         try:
             f = getattr(requests, method)
             return f(url, params=params, headers=headers, timeout=self.timeout)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             # useful instead of a long exception dump
-            sys.stderr.write("Request timed out {}".format(url))
+            LOG.exception("Request timed out %s", url)
             exit(1)
 
     def _retrieve_info(self):
-        log.debug("Querying the Netbox API for {}".format(self.identifier))
+        LOG.debug("Querying the Netbox API for %s", self.identifier)
         url = os.path.join(self.api_url, "api/dcim/devices/")
         params = self._get_params()
         params["limit"] = 0
         json_response = self._do_request(url, params)
-        log.debug("Decoding the response")
         # we expect the response to be a json object
         return json_response.json()
 
@@ -145,7 +141,7 @@ class Netbox(DcimBase):
 
     def get_secret(self, role, oob_info):
         device = oob_info["info"]["name"]
-        log.debug("Querying secret {} of device {}".format(role, device))
+        LOG.debug("Querying secret %s of device %s", role, device)
         response = self._do_request(
             url=os.path.join(self.api_url, "api/secrets/secrets/"),
             params={"role": role, "device": device.upper()},
@@ -156,14 +152,14 @@ class Netbox(DcimBase):
             return response.json()["results"][0]
 
         except (TypeError, KeyError, IndexError):
-            log.warning("Did not find secret {} for device {}".format(role, device))
+            LOG.warning("Did not find secret %s for device %s", role, device)
             return {
                 "name": None,
                 "plaintext": None,
             }
 
     def _get_secret_role_id(self, role_name):
-        log.debug("Searching for id of secret role {}".format(role_name))
+        LOG.debug("Searching for id of secret role %s", role_name)
         response = self._do_request(
             url=os.path.join(self.api_url, "api/secrets/secret-roles/"),
             params={"slug": role_name},
@@ -175,13 +171,11 @@ class Netbox(DcimBase):
             return None
 
     def set_secret(self, role_name, oob_info, secret_name, secret_text):
-        log.debug(
-            "Will upsert secret {} for device {}".format(role_name, oob_info["name"])
-        )
+        LOG.debug("Will upsert secret %s for device %s", role_name, oob_info["name"])
 
         role_id = self._get_secret_role_id(role_name)
         if role_id is None:
-            log.critical("unknown role slug {}".format(role_name))
+            LOG.critical("unknown role slug %s", role_name)
 
         url = os.path.join(self.api_url, "api/secrets/secrets/")
         f = requests.post
@@ -189,10 +183,8 @@ class Netbox(DcimBase):
         existing_secrets = self.get_secrets(oob_info)
         for s in existing_secrets:
             if s["role"] == role_name and s["name"] == secret_name:
-                log.debug(
-                    "Updating secret with role {} and name {}".format(
-                        role_name, secret_name
-                    )
+                LOG.debug(
+                    "Updating secret with role %s and name %s", role_name, secret_name
                 )
                 url = os.path.join(url, "{}/".format(s["id"]))
                 f = requests.patch
@@ -210,7 +202,7 @@ class Netbox(DcimBase):
         )
 
     def _get_secrets(self, oob_info):
-        log.debug("Searching for secrets of device {}".format(oob_info["name"]))
+        LOG.debug("Searching for secrets of device %s", oob_info["name"])
 
         response = self._do_request(
             url=os.path.join(self.api_url, "api/secrets/secrets/"),

@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
+import logging
 import json
 import os
 import sys
@@ -26,8 +27,9 @@ from bmcmanager.config import get_config
 from bmcmanager.dcim import DCIMS
 from bmcmanager.oob import OOBS
 from bmcmanager.errors import BMCManagerError
-from bmcmanager.logs import log
 from bmcmanager import exitcode
+
+LOG = logging.getLogger(__name__)
 
 README = "https://github.com/grnet/BMCManager/blob/master/README.md"
 
@@ -137,7 +139,7 @@ def bmcmanager_take_action(cmd, parsed_args):
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
         oob_config = get_oob_config(cmd.config, dcim, oob_info)
-        log.debug("Creating OOB object for {}".format(oob_info["oob"]))
+        LOG.debug("Creating OOB object for %s", oob_info["oob"])
         try:
             oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
         except KeyError:
@@ -149,10 +151,10 @@ def bmcmanager_take_action(cmd, parsed_args):
             else:
                 return cmd.action(oob)
         except Exception as e:
-            log.exception("Unhandled exception: {}".format(e))
+            LOG.exception("Unhandled exception: %s", e)
 
     if idx is None:
-        log.fatal('No servers found for "{}"'.format(parsed_args.server))
+        LOG.fatal("No servers found for '%s'", parsed_args.server)
         return [], []
 
 

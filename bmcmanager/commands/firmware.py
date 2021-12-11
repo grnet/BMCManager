@@ -16,6 +16,7 @@
 import argparse
 import logging
 import os
+import shlex
 import subprocess
 import sys
 import urllib.request
@@ -145,7 +146,7 @@ class LatestGet(Lister):
         return parser
 
     def _check_output(self, command):
-        LOG.debug("Executing {}".format(" ".join(command)))
+        LOG.debug("Executing %s", shlex.join(command))
         subprocess.check_call(command)
 
     def take_action(self, parsed_args):
@@ -153,7 +154,7 @@ class LatestGet(Lister):
             fetcher = firmware_fetchers[parsed_args.model]
 
         except KeyError as e:
-            LOG.error("Unsupported device type: {}".format(e))
+            LOG.error("Unsupported device type: %s", e)
             sys.exit(-1)
 
         result, downloads = fetcher().get()
@@ -167,18 +168,18 @@ class LatestGet(Lister):
         try:
             os.makedirs(parsed_args.download_to, exist_ok=True)
         except OSError as e:
-            LOG.error("Could not create download directory: {}".format(e))
+            LOG.error("Could not create download directory %s", e)
             sys.exit(-1)
 
         for url in downloads:
             name = url[url.rfind("/") + 1 :]
             file_name = os.path.join(parsed_args.download_to, name)
-            LOG.info("Downloading {} to {}".format(url, file_name))
+            LOG.info("Downloading %s to %s", url, file_name)
             try:
                 with open(file_name, "wb") as fout:
                     fout.write(urllib.request.urlopen(url).read())
             except (urllib.error.URLError, OSError) as e:
-                LOG.error("Failed: {}".format(e))
+                LOG.error("Failed: %s", e)
 
             if parsed_args.innoextract and name.endswith(".exe"):
                 LOG.info("Extracting with innoextract")

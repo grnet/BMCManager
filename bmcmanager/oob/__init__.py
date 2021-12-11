@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from bmcmanager.oob.base import OobBase
 from bmcmanager.oob.lenovo import Lenovo
 from bmcmanager.oob.dell import Dell
 from bmcmanager.oob.fujitsu import Fujitsu
@@ -22,4 +23,5 @@ OOBS = {
     "dell": Dell,
     "dell-inc": Dell,
     "fujitsu": Fujitsu,
+    "unknown": OobBase,
 }

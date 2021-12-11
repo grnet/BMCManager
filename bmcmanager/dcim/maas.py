@@ -13,10 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
+
 from maas.client.bones import SessionAPI
 
-from bmcmanager.logs import log
 from bmcmanager.dcim.base import DcimBase, DcimError
+
+LOG = logging.getLogger(__name__)
 
 
 class MaaS(DcimBase):
@@ -40,7 +43,7 @@ class MaaS(DcimBase):
         if self._session:
             return self._session
 
-        log.info("Connecting to {}".format(self.api_url))
+        LOG.info("Connecting to %s", self.api_url)
         _, self._session = SessionAPI.connect(self.api_url, apikey=self.api_key)
 
         return self._session

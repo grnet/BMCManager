@@ -18,6 +18,7 @@ from enum import Enum
 import logging
 import os
 import re
+import shlex
 import subprocess
 import sys
 from time import sleep
@@ -35,7 +36,7 @@ if sys.platform == "darwin":
 else:
     BROWSER_OPEN = "xdg-open"
 
-# Column indexes for ipmi-sel output
+
 class IPMISelOutput(Enum):
     """
     Column indices for ipmi-sel output.
@@ -144,11 +145,11 @@ class OobBase(object):
         return self._check_output(self._ipmitool_cmd(command))
 
     def _check_call(self, command):
-        LOG.debug("Executing %s", command)
+        LOG.debug("Executing %s", shlex.join(command))
         return subprocess.check_call(command)
 
     def _check_output(self, command):
-        LOG.debug("Executing %s", command)
+        LOG.debug("Executing %s", shlex.join(command))
         return subprocess.check_output(command).decode("utf-8")
 
     def identify(self):
@@ -519,6 +520,7 @@ class OobBase(object):
     def get_secrets(self):
         if not self.dcim.supports_secrets():
             LOG.fatal("Secrets not supported by DCIM")
+            return
 
         secrets = self.dcim.get_secrets(self.oob_info["info"])
 
@@ -529,6 +531,7 @@ class OobBase(object):
     def set_secret(self):
         if not self.dcim.supports_secrets():
             LOG.fatal("Secrets not supported by DCIM")
+            return
 
         r = self.dcim.set_secret(
             self.parsed_args.secret_role,
@@ -572,7 +575,7 @@ class OobBase(object):
             )
             if r.status_code >= 300:
                 LOG.critical("Setting NetBox secret failed")
-                LOG.critical("Error {}:\n{}".format(r.status_code, r.text))
+                LOG.critical("Status Code: %s\nResponse: %s", r.status_code, r.text)
             else:
                 self._print("Successfully updated secret")
 
@@ -599,7 +602,7 @@ class OobBase(object):
         }.get(args.address_type)
 
         if regex is None:
-            LOG.error("Unknown address type: {}".format(args.address_type))
+            LOG.error("Unknown address type: %s", args.address_type)
             return ""
 
         stdout = self._ipmitool(["lan", "print"])
@@ -622,7 +625,7 @@ class OobBase(object):
     def refresh_ipmi_address(self):
         addr = self._get_ipmi_address()
         custom_fields = {"IPMI": addr}
-        LOG.info("Patching custom fields: {}".format(custom_fields))
+        LOG.info("Patching custom fields: %s", custom_fields)
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
             LOG.error("Failed to refresh IPMI")
 

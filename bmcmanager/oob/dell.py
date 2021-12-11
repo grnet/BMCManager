@@ -40,7 +40,7 @@ class Dell(OobBase):
                     ipmi_host.replace("https://", ""),
                 ]
             )
-        except OSError as e:
+        except OSError:
             LOG.exception('Please run "gem install moob"')
             sys.exit(10)
 

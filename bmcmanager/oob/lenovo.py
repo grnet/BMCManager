@@ -99,7 +99,7 @@ class Lenovo(OobBase):
                 return [], True
             else:
                 LOG.critical("Could not parse response text")
-                LOG.debug("Response was:\n{}".format(text))
+                LOG.debug("Response was: %s", text)
                 return [], False
 
     def _connect(self):
@@ -115,7 +115,7 @@ class Lenovo(OobBase):
             text = self._post(url, data, cookies, headers).text
             parsed, retryable = self._parse_response(text)
             if not parsed and retryable and count < 4:
-                LOG.info("Will retry after {} seconds".format(count))
+                LOG.info("Will retry after %d seconds", count)
                 time.sleep(count)
             else:
                 break
@@ -225,9 +225,7 @@ class Lenovo(OobBase):
         response = self._post(url, params, self.session_token, self.CSRF_token)
 
         if response.status_code != 200:
-            LOG.critical(
-                "Cannot retrieve {}, error {}".format(item, response.status_code)
-            )
+            LOG.critical("Cannot retrieve %s, error %s", item, response.status_code)
             return []
 
         resp, _ = self._parse_response(response.text)
@@ -376,7 +374,7 @@ class Lenovo(OobBase):
 
         custom_fields["PSU"] = ", ".join(sorted(psus))
 
-        LOG.info("Patching custom fields: {}".format(custom_fields))
+        LOG.info("Patching custom fields: %s", custom_fields)
         if not self.dcim.set_custom_fields(self.oob_info, custom_fields):
             LOG.error("Failed to refresh DCIM firmware versions")
 
@@ -487,7 +485,7 @@ class Lenovo(OobBase):
                 LOG.info("No updates available")
                 return
             else:
-                LOG.info("Available update: {}".format(to_update))
+                LOG.info("Available update: %s", to_update)
 
         if 8 in args.stages and to_update:
             handle = handle or args.handle
@@ -521,7 +519,7 @@ class Lenovo(OobBase):
                     if progress is None:
                         LOG.info("Update in progress")
                     else:
-                        LOG.info("Update progress: {}%".format(progress))
+                        LOG.info("Update progress: %d%", progress)
                         if progress == 100:
                             LOG.info("Update complete!")
                             break

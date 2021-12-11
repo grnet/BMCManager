@@ -15,11 +15,12 @@
 
 from datetime import datetime
 import json
+import logging
 import urllib
 
-from bmcmanager.logs import log
 from bmcmanager.firmwares.base import LatestFirmwareFetcher
 
+LOG = logging.getLogger(__name__)
 
 TRACKED_FIRMWARE = {
     "ThinkServer System Manager (TSM) Update Bundle File - ThinkServer Systems": "TSM",  # noqa
@@ -48,14 +49,14 @@ class LenovoBase(LatestFirmwareFetcher):
     def get(self):
         url = LENOVO_URL.format(self.model_name, self.device_name)
         try:
-            log.debug("GET {}".format(url))
+            LOG.debug("GET %s", url)
             response = json.loads(urllib.request.urlopen(url).read())
             items = response["body"]["DownloadItems"]
         except (json.JSONDecodeError, urllib.error.URLError) as e:
-            log.error("Could not fetch URL: {}".format(e))
+            LOG.error("Could not fetch URL: %s", e)
             return {}, []
-        except KeyError as e:
-            log.error("Invalid data format: {}".format(e))
+        except (json.JSONDecodeError, KeyError) as e:
+            LOG.error("Invalid data format: %s", e)
             return {}, []
 
         tracked_firmware = {**TRACKED_FIRMWARE, **self.extra_firmware}
@@ -86,10 +87,10 @@ class LenovoBase(LatestFirmwareFetcher):
                 )
 
             except ValueError as e:
-                log.error("Invalid data format: {}".format(e))
+                LOG.error("Invalid data format: %s", e)
 
             except KeyError as e:
-                log.error("Missing information: {}".format(e))
+                LOG.error("Missing information: %s", e)
 
         return result, downloads
 
