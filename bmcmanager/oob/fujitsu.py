@@ -16,9 +16,9 @@
 
 import re
 from subprocess import Popen
+import tempfile
 from urllib import error as urlerror
 from urllib import request
-import tempfile
 
 from bs4 import BeautifulSoup
 
