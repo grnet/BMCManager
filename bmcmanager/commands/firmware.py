@@ -213,9 +213,11 @@ class LatestCheck(Command):
         try:
             fetcher = firmware_fetchers[parsed_args.model]
 
-        except KeyError as e:
-            LOG.error("Unsupported device type: {}".format(e))
-            sys.exit(-1)
+        except KeyError:
+            nagios.result(
+                nagios.UNKNOWN, "Unsupported device type {}".format(parsed_args.model)
+            )
+            sys.exit(exitcode.get())
 
         result, _ = fetcher().get()
 
