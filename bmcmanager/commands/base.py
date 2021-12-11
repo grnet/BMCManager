@@ -22,8 +22,10 @@ import sys
 from cliff.command import Command
 from cliff.show import ShowOne
 from cliff.lister import Lister
+from stevedore.driver import DriverManager
 
-from bmcmanager.config import get_config
+from bmcmanager.config import load_config
+
 from bmcmanager.dcim import DCIMS
 from bmcmanager.oob import OOBS
 from bmcmanager.errors import BMCManagerError
@@ -75,8 +77,6 @@ def server_arguments(parser):
         "-d",
         "--dcim",
         help="name of DCIM to use",
-        choices=["netbox", "maas"],
-        default="netbox",
     )
     parser.add_argument(
         "-t",
@@ -91,13 +91,19 @@ def get_dcim(args, config):
     """
     Get a configured DCIM from arguments and configuration
     """
-    if args.dcim not in DCIMS:
-        raise RuntimeError('Unsupported DCIM "{}", see {}'.format(args.dcim, README))
-    if args.dcim not in config:
-        raise RuntimeError(
-            'No configuration for DCIM "{}", see {}'.format(args.dcim, README)
-        )
-    return DCIMS[args.dcim](args, config[args.dcim])
+    dcim_name = args.dcim or config.default_dcim
+    if not dcim_name:
+        raise ValueError("DCIM name not specified, see {}".format(README))
+
+    if dcim_name not in config.available_dcims:
+        raise ValueError("DCIM {} not configured, see {}".format(dcim_name, README))
+
+    dcim_config = config[dcim_name]
+    if not dcim_config.type:
+        raise ValueError("DCIM type not specified, possible values {}".format(DCIMS))
+
+    Class = DriverManager("bmcmanager.dcim", dcim_config.type).driver
+    return Class(args, dcim_config)
 
 
 def get_oob_config(config, dcim, oob_info, get_secret=True):
@@ -105,45 +111,35 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
     Get configuration for an OOB
     """
     oob_name = oob_info["oob"].lower()
-    try:
-        oob_params = config[oob_name]
-    except KeyError:
-        raise BMCManagerError("Invalid OOB name {}".format(oob_name))
+    oob_params = config[oob_name]
 
-    cfg = {
-        "username": oob_params.get("username"),
-        "password": oob_params.get("password"),
-    }
     if get_secret and dcim.supports_secrets() and "credentials" in oob_params:
         secret = dcim.get_secret(oob_params["credentials"], oob_info)
         if secret["name"]:
-            cfg["username"] = secret["name"]
+            oob_params.username = secret["name"]
         if secret["plaintext"]:
-            cfg["password"] = secret["plaintext"]
+            oob_params.password = secret["plaintext"]
 
-    cfg["username"] = os.getenv("BMCMANAGER_USERNAME", cfg["username"])
-    cfg["password"] = os.getenv("BMCMANAGER_PASSWORD", cfg["password"])
-
-    cfg["nfs_share"] = os.getenv("BMCMANAGER_NFS_SHARE", oob_params.get("nfs_share"))
-    cfg["http_share"] = os.getenv("BMCMANAGER_HTTP_SHARE", oob_params.get("http_share"))
-
-    cfg["oob_params"] = oob_params
-    return cfg
+    return oob_params
 
 
 def bmcmanager_take_action(cmd, parsed_args):
     cmd.parsed_args = parsed_args
-    cmd.config = get_config(parsed_args.config_file)
+    cmd.config = load_config(parsed_args.config_file)
     dcim = get_dcim(parsed_args, cmd.config)
 
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
+        oob_name = oob_info["oob"]
+        LOG.debug("Creating OOB object for %s", oob_name)
+
+        if oob_name not in OOBS or oob_name not in cmd.config:
+            LOG.info("OOB class %s not supported", oob_name)
+            oob_info["oob"] = cmd.config.fallback_oob
+            LOG.info("Falling back to OOB class %s", cmd.config.fallback_oob)
+
         oob_config = get_oob_config(cmd.config, dcim, oob_info)
-        LOG.debug("Creating OOB object for %s", oob_info["oob"])
-        try:
-            oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
-        except KeyError:
-            raise BMCManagerError("Invalid OOB {}".format(oob_info["oob"]))
+        oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
 
         try:
             if hasattr(cmd, "oob_method"):

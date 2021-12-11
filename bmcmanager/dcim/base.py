@@ -25,14 +25,6 @@ class DcimBase(object):
         self.args = args
         self.config = config
         self.identifier = args.server
-        self.dcim_params = config
-        self.api_url = config["api_url"]
-        self.is_rack = self.args.type == "rack"
-        self.is_rack_unit = self.args.type == "rack-unit"
-        self.is_serial = self.args.type == "serial"
-
-    def get_info(self):
-        raise NotImplementedError("get_info not implemented")
 
     def get_oobs(self):
         raise NotImplementedError("get_oobs not implemented")

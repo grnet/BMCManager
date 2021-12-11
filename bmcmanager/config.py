@@ -13,58 +13,72 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import configparser
 import logging
-import os
-import sys
+
+from oslo_config import cfg
+
+from bmcmanager.oob import OOBS
+from bmcmanager.dcim import DCIMS
+
 
 LOG = logging.getLogger(__name__)
 
+CONF = cfg.ConfigOpts()
+
+DEFAULT_OPTIONS = [
+    cfg.ListOpt(name="available_dcims", default=[]),
+    cfg.StrOpt(name="default_dcim"),
+    cfg.StrOpt(name="fallback_oob", default="base"),
+    cfg.DictOpt(name="oob_overrides", default={}),
+]
+
+CONF.register_opts(DEFAULT_OPTIONS)
+
+DCIM_OPTIONS = [
+    cfg.StrOpt(name="type", choices=DCIMS),
+    # NetBox
+    cfg.URIOpt(name="netbox_api_url", schemes=["http", "https"]),
+    cfg.StrOpt(name="netbox_api_token", secret=True),
+    cfg.IntOpt(name="netbox_api_timeout", default=10),
+    cfg.StrOpt(name="netbox_session_key", secret=True),
+    cfg.StrOpt(name="netbox_credentials_secret"),
+    cfg.ListOpt(name="netbox_device_type_ids", item_type=int),
+    # MaaS
+    cfg.URIOpt(name="maas_api_url", schemes=["http", "https"]),
+    cfg.StrOpt(name="maas_api_key", secret=True),
+    cfg.URIOpt(name="maas_ui_url", schemes=["http", "https"]),
+]
+
+OOB_OPTIONS = [
+    cfg.StrOpt("username"),
+    cfg.StrOpt("password", secret=True),
+    cfg.StrOpt("http_share"),
+    cfg.StrOpt("nfs_share"),
+    cfg.IntOpt("expected_psus", default=1, min=0),
+    cfg.DictOpt("expected_firmware_versions", default={}),
+]
 
 
-def format_config(config):
-    # Recursive function that converts a
-    # configparser.ConfigParser object into a dict
-    # this basically recursivelly calls dict() on every subdict
-    # TODO: refactor
-    keys = dict(config).keys()
-    formatted = {}
-    for k in keys:
-        formatted[k.lower()] = config[k]
-        if not type(config[k]) == str:
-            formatted[k.lower()] = format_config(config[k])
-    return formatted
+def load_config(config_file: str):
+    """
+    Load configuration
+    """
+    # Load configuration
+    config_files = [config_file] if config_file else None
+    CONF(args=[], project="bmcmanager", default_config_files=config_files)
 
+    # Dynamically register dcim groups
+    for dcim_name in CONF.available_dcims:
+        CONF.register_opts(DCIM_OPTIONS, group=dcim_name)
 
-def get_config(config_path):
-    try:
-        extra_paths = []
-        if os.getenv("SNAP_COMMON"):
-            extra_paths.extend([os.path.expandvars("$SNAP_COMMON/bmcmanager")])
+    # Setup OOB overrides
+    for oob_name, oob_target in CONF.oob_overrides.items():
+        OOBS[oob_name] = OOBS[oob_target]
 
-        if os.getenv("XDG_CONFIG_HOME"):
-            extra_paths.extend(
-                [
-                    os.path.expandvars("$XDG_CONFIG_HOME/.config/bmcmanager"),
-                    os.path.expandvars("$XDG_CONFIG_HOME/bmcmanager"),
-                ]
-            )
+    # Dynamically register OOB groups
+    for oob_name in OOBS.keys():
+        CONF.register_opts(OOB_OPTIONS, group=oob_name)
 
-        config = configparser.ConfigParser()
-        which = config.read(
-            [
-                config_path,
-                os.getenv("BMCMANAGER_CONFIG", ""),
-                os.path.expanduser("~/.config/bmcmanager"),
-                "/etc/bmcmanager",
-                *extra_paths,
-            ]
-        )
+    CONF.log_opt_values(LOG, logging.DEBUG)
 
-        LOG.debug("Loaded config from %s", which)
-
-    except configparser.ParsingError as e:
-        LOG.error("Invalid configuration file: %s", e)
-        sys.exit(1)
-
-    return format_config(config)
+    return CONF

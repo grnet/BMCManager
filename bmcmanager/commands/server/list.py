@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.commands.base import get_dcim, get_config, BMCManagerServerListCommand
+from bmcmanager.commands.base import get_dcim, load_config, BMCManagerServerListCommand
 
 
 class List(BMCManagerServerListCommand):
@@ -33,7 +33,7 @@ class List(BMCManagerServerListCommand):
     ]
 
     def take_action(self, parsed_args):
-        dcim = get_dcim(parsed_args, get_config(parsed_args.config_file))
+        dcim = get_dcim(parsed_args, load_config(parsed_args.config_file))
         values = [[o["info"][col] for col in self.columns] for o in dcim.get_oobs()]
 
         return self.columns, values

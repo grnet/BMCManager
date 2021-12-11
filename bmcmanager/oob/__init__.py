@@ -19,9 +19,9 @@ from bmcmanager.oob.dell import Dell
 from bmcmanager.oob.fujitsu import Fujitsu
 
 OOBS = {
+    "base": OobBase,
     "lenovo": Lenovo,
     "dell": Dell,
     "dell-inc": Dell,
     "fujitsu": Fujitsu,
-    "unknown": OobBase,
 }

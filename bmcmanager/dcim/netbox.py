@@ -28,37 +28,19 @@ class Netbox(DcimBase):
     def __init__(self, args, config):
         super(Netbox, self).__init__(args, config)
 
-        self.timeout = 10
-        try:
-            timeout = self.dcim_params.get("timeout", self.timeout)
-            self.timeout = int(timeout)
-        except (TypeError, ValueError):
-            LOG.warning("Ignoring invalid timeout %s", timeout)
-
-        self.device_type_ids = None
-        raw_ids = self.dcim_params.get("device_type_id")
-        if raw_ids is not None:
-            try:
-                # '1, 3,2' --> [1, 2, 3]
-                self.device_type_ids = list(
-                    map(int, map(str.strip, raw_ids.split(",")))
-                )
-            except (TypeError, ValueError):
-                LOG.warning("Ignoring invalid device type ids %s", raw_ids)
-
         self.info = self._retrieve_info()
 
     def _get_params(self):
-        if self.is_serial:
+        if self.args.type == "serial":
             return {"serial": self.identifier}
-        elif self.is_rack_unit:
+        elif self.args.type == "rack-unit":
             return {"name": self.identifier}
-        elif self.is_rack:
+        elif self.args.type == "rack":
             return {"rack_id": self._get_rack_id()}
 
         params = {"q": self.identifier}
-        if self.device_type_ids is not None:
-            params["device_type_id"] = self.device_type_ids
+        if self.config.netbox_device_type_ids is not None:
+            params["device_type_id"] = self.config.netbox_device_type_ids
         return params
 
     def _get_rack_id(self):
@@ -76,12 +58,12 @@ class Netbox(DcimBase):
     def _get_headers(self, with_session_key=False):
         headers = {"Accept": "application/json"}
 
-        token = self.dcim_params.get("netbox_token")
+        token = self.config.netbox_api_token
         if token is not None:
             headers.update({"Authorization": "Token {}".format(token)})
 
         if with_session_key:
-            session_key = self.dcim_params.get("session_key")
+            session_key = self.config.netbox_session_key
             if session_key is not None:
                 headers.update({"X-Session-Key": session_key})
 
@@ -94,7 +76,8 @@ class Netbox(DcimBase):
 
         try:
             f = getattr(requests, method)
-            return f(url, params=params, headers=headers, timeout=self.timeout)
+            timeout = self.config.netbox_api_timeout
+            return f(url, params=params, headers=headers, timeout=timeout)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             # useful instead of a long exception dump
             LOG.exception("Request timed out %s", url)
@@ -102,7 +85,7 @@ class Netbox(DcimBase):
 
     def _retrieve_info(self):
         LOG.debug("Querying the Netbox API for %s", self.identifier)
-        url = os.path.join(self.api_url, "api/dcim/devices/")
+        url = os.path.join(self.config.netbox_api_url, "api/dcim/devices/")
         params = self._get_params()
         params["limit"] = 0
         json_response = self._do_request(url, params)

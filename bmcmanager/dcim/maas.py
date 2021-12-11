@@ -27,13 +27,10 @@ class MaaS(DcimBase):
         super(MaaS, self).__init__(args, config)
         self._session = None
 
-        if not self.dcim_params["api_url"]:
+        if not self.config.maas_api_url:
             raise DcimError("MaaS API URL is not set, see README.md")
-        if not self.dcim_params["api_key"]:
+        if not self.config.maas_api_key:
             raise DcimError("MaaS API Key is not set, see README.md")
-
-        self.api_url = self.dcim_params["api_url"]
-        self.api_key = self.dcim_params["api_key"]
 
     def session(self) -> SessionAPI:
         """
@@ -43,8 +40,10 @@ class MaaS(DcimBase):
         if self._session:
             return self._session
 
-        LOG.info("Connecting to %s", self.api_url)
-        _, self._session = SessionAPI.connect(self.api_url, apikey=self.api_key)
+        LOG.info("Connecting to %s", self.config.maas_api_url)
+        _, self._session = SessionAPI.connect(
+            self.config.maas_api_url, apikey=self.config.maas_api_key
+        )
 
         return self._session
 
@@ -102,8 +101,9 @@ class MaaS(DcimBase):
         raise DcimError("not support by MaaS DCIM")
 
     def oob_url(self, oob_info):
-        if not self.dcim_params.get("ui_url"):
+        if not self.config.maas_ui_url:
             raise DcimError("MaaS UI URL is not set, see README.md")
+
         return "{}/MAAS/l/machine/{}".format(
-            self.dcim_params["ui_url"], oob_info["info"]["id"]
+            self.config.maas_ui_url, oob_info["info"]["id"]
         )

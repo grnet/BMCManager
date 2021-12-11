@@ -13,10 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bmcmanager.dcim.netbox import Netbox
-from bmcmanager.dcim.maas import MaaS
+from stevedore.extension import ExtensionManager
 
-DCIMS = {
-    "netbox": Netbox,
-    "maas": MaaS,
-}
+DCIMS = [e.name for e in ExtensionManager("bmcmanager.dcim").extensions]
