@@ -6,11 +6,23 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Configure multiple DCIMs in the same config file, even multiple sites of the same type (e.g. multiple NetBox DCIMs).
+- Configure a default OOB (by default falls back to the base OOB, using universal ipmi commands).
+- Ability to write new dcims as plugins.
+  - Implement your custom plugins extending `bmcmanager.dcim.base.DcimBase` and add an entrypoint under `bmcmanager.dcim`.
+
 ### Changed
+
+- New configuration format, in order to facilitate the new functionality above.
+  - New configuration is based on the `oslo.config`.
+- Supported DCIMs are now based on stevedore entrypoints.
+- Overall refactors in internal components, separating concerns and making bmcmanager easier to maintain and extend in the future.
 
 ### Fixed
 
 - Manufacturer and device type being reported as `unknown` for MaaS servers.
+- Snap build failures with newer snapcraft versions.
+- Mangling of bmcmanager binary and snap version.
 
 ## [v1.2.0] (2020-02-21)
 
