@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file.
 - Ability to write new dcims as plugins.
   - Implement your custom plugins extending `bmcmanager.dcim.base.DcimBase` and add an entrypoint under `bmcmanager.dcim`.
 - Add new `local` DCIM (all bmcmanager commands are executing ipmitool and freeipmi-tools locally on the host).
+- Add new `--debug-config` option, printing all configuration values.
 
 ### Changed
 

@@ -66,6 +66,9 @@ def base_arguments(parser):
     Base bmcmanager arguments
     """
     parser.add_argument("--config-file", help="configuration file path", default="")
+    parser.add_argument(
+        "--debug-config", help="print loaded configuration options", action="store_true"
+    )
 
 
 def server_arguments(parser):

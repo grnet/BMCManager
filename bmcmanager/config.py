@@ -59,12 +59,28 @@ OOB_OPTIONS = [
 ]
 
 
-def load_config(config_file: str):
+def load_config(args: argparse.Namespace):
     """
     Load configuration
     """
-    # Load configuration
-    config_files = [config_file] if config_file else None
+
+    if args.config_file:
+        config_files = [args.config_file]
+    else:
+        config_files = [
+            *cfg.find_config_files(project="bmcmanager"),
+            os.path.expanduser("~/.config/bmcmanager.conf"),
+            "bmcmanager.conf",
+            "/etc/bmcmanager.conf",
+            os.path.expandvars("$XDG_CONFIG_HOME/bmcmanager.conf"),
+            os.path.expandvars("$XDG_CONFIG_HOME/.config/bmcmanager.conf"),
+            os.path.expandvars("$SNAP_COMMON/bmcmanager.conf"),
+            os.path.expandvars("$SNAP_COMMON/bmcmanager.conf"),
+        ]
+        config_files = [c for c in config_files if os.path.exists(c)]
+
+    LOG.debug("Attempt to load configuration from %s", config_files)
+
     CONF(args=[], project="bmcmanager", default_config_files=config_files)
 
     # Dynamically register dcim groups
@@ -79,6 +95,7 @@ def load_config(config_file: str):
     for oob_name in OOBS.keys():
         CONF.register_opts(OOB_OPTIONS, group=oob_name)
 
-    CONF.log_opt_values(LOG, logging.DEBUG)
+    if args.debug_config:
+        CONF.log_opt_values(LOG, logging.DEBUG)
 
     return CONF
