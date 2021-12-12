@@ -37,7 +37,7 @@ CONF.register_opts(DEFAULT_OPTIONS)
 DCIM_OPTIONS = [
     cfg.StrOpt(name="type", choices=DCIMS),
     # NetBox
-    cfg.URIOpt(name="netbox_api_url", schemes=["http", "https"]),
+    cfg.URIOpt(name="netbox_url", schemes=["http", "https"]),
     cfg.StrOpt(name="netbox_api_token", secret=True),
     cfg.IntOpt(name="netbox_api_timeout", default=10),
     cfg.StrOpt(name="netbox_session_key", secret=True),

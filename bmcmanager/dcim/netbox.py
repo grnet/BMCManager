@@ -45,7 +45,7 @@ class Netbox(DcimBase):
 
     def _get_rack_id(self):
         LOG.debug("Querying the Netbox API for %s", self.identifier)
-        url = os.path.join(self.api_url, "api/dcim/racks/")
+        url = os.path.join(self.config.netbox_url, "api/dcim/racks/")
         params = {"name": self.identifier}
         json_response = self._do_request(url, params)
 
@@ -85,7 +85,7 @@ class Netbox(DcimBase):
 
     def _retrieve_info(self):
         LOG.debug("Querying the Netbox API for %s", self.identifier)
-        url = os.path.join(self.config.netbox_api_url, "api/dcim/devices/")
+        url = os.path.join(self.config.netbox_url, "api/dcim/devices/")
         params = self._get_params()
         params["limit"] = 0
         json_response = self._do_request(url, params)
@@ -126,7 +126,7 @@ class Netbox(DcimBase):
         device = oob_info["info"]["name"]
         LOG.debug("Querying secret %s of device %s", role, device)
         response = self._do_request(
-            url=os.path.join(self.api_url, "api/secrets/secrets/"),
+            url=os.path.join(self.config.netbox_url, "api/secrets/secrets/"),
             params={"role": role, "device": device.upper()},
             with_session_key=True,
         )
@@ -144,7 +144,7 @@ class Netbox(DcimBase):
     def _get_secret_role_id(self, role_name):
         LOG.debug("Searching for id of secret role %s", role_name)
         response = self._do_request(
-            url=os.path.join(self.api_url, "api/secrets/secret-roles/"),
+            url=os.path.join(self.config.netbox_url, "api/secrets/secret-roles/"),
             params={"slug": role_name},
         )
 
@@ -160,7 +160,7 @@ class Netbox(DcimBase):
         if role_id is None:
             LOG.critical("unknown role slug %s", role_name)
 
-        url = os.path.join(self.api_url, "api/secrets/secrets/")
+        url = os.path.join(self.config.netbox_url, "api/secrets/secrets/")
         f = requests.post
 
         existing_secrets = self.get_secrets(oob_info)
@@ -188,7 +188,7 @@ class Netbox(DcimBase):
         LOG.debug("Searching for secrets of device %s", oob_info["name"])
 
         response = self._do_request(
-            url=os.path.join(self.api_url, "api/secrets/secrets/"),
+            url=os.path.join(self.config.netbox_url, "api/secrets/secrets/"),
             params={
                 "device": oob_info["name"],
             },
@@ -216,7 +216,8 @@ class Netbox(DcimBase):
         return (
             requests.patch(
                 url=os.path.join(
-                    self.api_url, "api/dcim/devices/{}/".format(oob_info["info"]["id"])
+                    self.config.netbox_url,
+                    "api/dcim/devices/{}/".format(oob_info["info"]["id"]),
                 ),
                 headers=self._get_headers(),
                 json={
@@ -228,5 +229,6 @@ class Netbox(DcimBase):
 
     def oob_url(self, oob_info):
         return os.path.join(
-            self.api_url, "dcim/devices/{}/".format(oob_info["info"]["id"])
+            self.config.netbox_url,
+            "dcim/devices/{}/".format(oob_info["info"]["id"]),
         )
