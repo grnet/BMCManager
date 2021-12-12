@@ -103,26 +103,9 @@ def get_dcim(args):
     return Class(dcim_name, args)
 
 
-def get_oob_config(dcim, oob_info, get_secret=True):
-    """
-    Get configuration for an OOB
-    """
-    oob_name = oob_info["oob"].lower()
-    oob_params = CONF[oob_name]
-
-    if get_secret and dcim.supports_secrets() and "credentials" in oob_params:
-        secret = dcim.get_secret(oob_params.credentials, oob_info)
-        if secret["name"]:
-            oob_params.username = secret["name"]
-        if secret["plaintext"]:
-            oob_params.password = secret["plaintext"]
-
-    return oob_params
-
-
 def bmcmanager_take_action(cmd, parsed_args):
     cmd.parsed_args = parsed_args
-    load_config(parsed_args)
+    load_config(parsed_args, OOBS)
     dcim = get_dcim(parsed_args)
 
     idx = None

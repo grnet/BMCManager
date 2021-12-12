@@ -234,3 +234,10 @@ class Netbox(DcimBase):
             self.config.netbox_url,
             "dcim/devices/{}/".format(oob_info["info"]["id"]),
         )
+
+    def get_ipmi_credentials_from_dcim(self, oob_info):
+        if not self.config.netbox_credentials_secret:
+            return oob_info["ipmi"], None, None
+
+        secret = self.get_secret(self.config.netbox_credentials_secret, oob_info)
+        return oob_info["ipmi"], secret["name"], secret["plaintext"]

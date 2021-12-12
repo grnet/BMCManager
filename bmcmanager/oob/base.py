@@ -28,6 +28,7 @@ import paramiko
 from bmcmanager.interactive import posix_shell
 from bmcmanager.utils import firmware
 from bmcmanager import nagios
+from bmcmanager.config import CONF
 
 LOG = logging.getLogger(__name__)
 
@@ -80,15 +81,12 @@ class OobBase(object):
     URL_VALIDATE = "/rpc/WEBSES/validate.asp"
     URL_VNC = "/Java/jviewer.jnlp?EXTRNIP={}&JNLPSTR=JViewer"
 
-    def __init__(self, parsed_args, dcim, oob_config, oob_info):
+    def __init__(self, name, parsed_args, dcim, oob_info):
+        self.name = name
         self.parsed_args = parsed_args
         self.oob_info = oob_info
         self.dcim = dcim
-        self.oob_config = oob_config
-        self.username = self.oob_config["username"]
-        self.password = self.oob_config["password"]
-        self.nfs_share = self.oob_config["nfs_share"]
-        self.http_share = self.oob_config["http_share"]
+        self.config = CONF[name]
 
     def _print(self, msg):
         # TODO: remove this, use normal log messages
@@ -134,10 +132,9 @@ class OobBase(object):
 
     # command is an array
     def _ipmitool_cmd(self, command):
-        host = self.oob_info["ipmi"].replace("https://", "")
         return [
             "ipmitool",
-            *self.dcim.format_ipmitool_credentials(host, self.username, self.password),
+            *self.dcim.format_ipmitool_credentials(self.oob_info),
             *command,
         ]
 
@@ -262,14 +259,14 @@ class OobBase(object):
     def unlock_power_switch(self):
         raise NotImplementedError("unlock-power-switch")
 
-    def _ipmi_sensors_cmd(self, host, username, password, args=[]):
+    def _ipmi_sensors_cmd(self, args=[]):
         if os.getenv("XDG_CACHE_HOME"):
             cache_dir_arg = "--sdr-cache-dir=$XDG_CACHE_HOME"
             args = [*args, os.path.expandvars(cache_dir_arg)]
 
         return [
             "ipmi-sensors",
-            *self.dcim.format_freeipmi_credentials(host, username, password),
+            *self.dcim.format_freeipmi_credentials(self.oob_info),
             "--quiet-cache",
             "--sdr-cache-recreate",
             "--interpret-oem-data",
@@ -279,10 +276,10 @@ class OobBase(object):
             *args,
         ]
 
-    def _ipmi_sel_cmd(self, host, username, password, args=[]):
+    def _ipmi_sel_cmd(self, args=[]):
         return [
             "ipmi-sel",
-            *self.dcim.format_freeipmi_credentials(host, username, password),
+            *self.dcim.format_freeipmi_credentials(self.oob_info),
             "--output-event-state",
             "--interpret-oem-data",
             "--entity-sensor-names",
@@ -291,17 +288,16 @@ class OobBase(object):
             *args,
         ]
 
-    def _ipmi_dcmi_cmd(self, host, username, password, args=[]):
+    def _ipmi_dcmi_cmd(self, args=[]):
         return [
             "ipmi-dcmi",
-            *self.dcim.format_freeipmi_credentials(host, username, password),
+            *self.dcim.format_freeipmi_credentials(self.oob_info),
             "--get-system-power-statistics",
             *args,
         ]
 
     def ipmi_sensors(self):
-        host = self.oob_info["ipmi"].replace("https://", "")
-        cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
+        cmd = self._ipmi_sensors_cmd()
         lines = self._check_output(cmd).strip().split("\n")
         columns = list(map(str.strip, lines[0].split("|")))
         values = [list(map(str.strip, line.split("|"))) for line in lines[1:]]
@@ -366,7 +362,7 @@ class OobBase(object):
         )
 
     def _get_sel_errors(self, host):
-        cmd = self._ipmi_sel_cmd(host, self.username, self.password)
+        cmd = self._ipmi_sel_cmd()
         logs = self._check_output(cmd)
         for line in reversed(logs.split("\n")[1:-1]):
             split = list(map(lambda x: x.strip(), line.split("|")))
@@ -390,7 +386,7 @@ class OobBase(object):
             return
 
         perfdata = []
-        cmd = self._ipmi_dcmi_cmd(host, self.username, self.password)
+        cmd = self._ipmi_dcmi_cmd()
         try:
             dcmi_output = self._check_output(cmd)
         except Exception as e:
@@ -404,7 +400,7 @@ class OobBase(object):
 
         sel_errors = list(self._get_sel_errors(host))
 
-        cmd = self._ipmi_sensors_cmd(host, self.username, self.password)
+        cmd = self._ipmi_sensors_cmd()
         try:
             sensors = self._check_output(cmd)
         except Exception as e:
@@ -465,16 +461,13 @@ class OobBase(object):
         nagios.result(status, msg or "SEL, Sensors OK", lines, perfdata, pre)
 
     def creds(self):
-        ipmi = self.oob_info["ipmi"].replace("https://", "")
         columns = ("address", "username", "password")
-        values = (ipmi, self.username, self.password)
+        values = self.dcim.get_ipmi_credentials(self.oob_info)
         return columns, values
 
     def ipmi_ssh(self):
         port = 22
-        hostname = self.oob_info["ipmi"].replace("https://", "")
-        username = self.username
-        password = self.password
+        hostname, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
 
         if self.parsed_args.command:
             client = paramiko.SSHClient()
@@ -555,17 +548,19 @@ class OobBase(object):
         header = stdout[0]
         name_start = header.find("Name")
         found = False
+
+        _, current_username, _ = self.dcim.get_ipmi_credentials(self.oob_info)
         for line in stdout[1:]:
             uid = line[:name_start].strip()
             username = line[name_start : line.find(" ", name_start)]
 
-            if username == self.username:
+            if username == current_username:
                 found = True
                 LOG.debug("ID of user {} is {}".format(username, uid))
                 break
 
         if not found:
-            self._print("User {} not found".format(self.username))
+            self._print("User {} not found".format(current_username))
             return
 
         self._print(self._ipmitool(["user", "set", "password", uid, args.new_password]))

@@ -76,9 +76,10 @@ class Lenovo(OobBase):
         return {"Content-type": "text/plain"}
 
     def _get_console_data(self):
+        _, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
         return {
-            "WEBVAR_PASSWORD": str(self.password),
-            "WEBVAR_USERNAME": str(self.username),
+            "WEBVAR_PASSWORD": str(password),
+            "WEBVAR_USERNAME": str(username),
         }
 
     def _parse_response(self, text):
@@ -167,9 +168,8 @@ class Lenovo(OobBase):
 
     def _system_ram(self):
         port = 22
-        hostname = self.oob_info["ipmi"].replace("https://", "")
-        username = self.username
-        password = self.password
+        hostname, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
+        hostname = hostname.replace("https://", "")
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -382,16 +382,16 @@ class Lenovo(OobBase):
         return d1["DEV_IDENTIFIER"] == d2["DEV_IDENTIFIER"]
 
     def firmware_upgrade_osput(self):
-        ipmi = self.oob_info["ipmi"].replace("https://", "")
+        hostname, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
         return self._check_call(
             [
                 self.parsed_args.osput,
                 "-H",
-                ipmi,
+                hostname.replce("https://", ""),
                 "-u",
-                self.username,
+                username,
                 "-p",
-                self.password,
+                password,
                 "-f",
                 self.parsed_args.bundle,
                 "-c",

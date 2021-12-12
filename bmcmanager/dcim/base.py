@@ -41,15 +41,24 @@ class DcimBase(object):
     def set_custom_fields(self, oob_info, custom_fields):
         return False
 
-    def format_ipmitool_credentials(self, host, username, password) -> List[str]:
-        # TODO: host, username, password should not be an argument
-        return ["-H", host, "-U", username, "-P", password, "-I", "lanplus"]
+    def format_ipmitool_credentials(self, oob_info) -> List[str]:
+        host, username, password = self.get_ipmi_credentials(oob_info)
+        return [
+            "-H",
+            host.replace("https://", ""),
+            "-U",
+            username,
+            "-P",
+            password,
+            "-I",
+            "lanplus",
+        ]
 
-    def format_freeipmi_credentials(self, host, username, password) -> List[str]:
-        # TODO: host, username, password should not be an argument
+    def format_freeipmi_credentials(self, oob_info) -> List[str]:
+        host, username, password = self.get_ipmi_credentials(oob_info)
         return [
             "-h",
-            host,
+            host.replace("https://", ""),
             "-u",
             username,
             "-p",
@@ -58,6 +67,26 @@ class DcimBase(object):
             "user",
             "--driver-type=LAN_2_0",
         ]
+
+    def get_ipmi_credentials(self, oob_info):
+        """
+        Return IPMI credentials (or default ones from OOB configuration)
+        """
+        host, username, password = self.get_ipmi_credentials_from_dcim(oob_info)
+        if not host:
+            host = oob_info["ipmi"]
+        if not username:
+            username = CONF[oob_info["oob"].lower()].username
+        if not password:
+            password = CONF[oob_info["oob"].lower()].password
+
+        return host, username, password
+
+    def get_ipmi_credentials_from_dcim(self, oob_info):
+        """
+        Return IPMI credentials from DCIM. Subclasses should implement this.
+        """
+        raise NotImplementedError()
 
 
 class DcimError(Exception):

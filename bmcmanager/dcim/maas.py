@@ -88,14 +88,11 @@ class MaaS(DcimBase):
                 "custom_fields": machine["owner_data"],
             }
 
-    def get_secret(self, role, oob_info):
+    def get_ipmi_credentials_from_dcim(self, oob_info):
         power = self.session().Machine.power_parameters(
             system_id=oob_info["info"]["id"]
         )
-        return {
-            "name": power["power_user"],
-            "plaintext": power["power_pass"],
-        }
+        return power["power_address"], power["power_user"], power["power_pass"]
 
     def set_custom_fields(self, oob_info, custom_fields):
         raise DcimError("not support by MaaS DCIM")

@@ -15,6 +15,8 @@
 
 from bmcmanager.commands.base import get_dcim, load_config, BMCManagerServerListCommand
 
+from bmcmanager.oob import OOBS
+
 
 class List(BMCManagerServerListCommand):
     """
@@ -33,7 +35,7 @@ class List(BMCManagerServerListCommand):
     ]
 
     def take_action(self, parsed_args):
-        load_config(parsed_args)
+        load_config(parsed_args, OOBS)
         dcim = get_dcim(parsed_args)
         values = [[o["info"][col] for col in self.columns] for o in dcim.get_oobs()]
 

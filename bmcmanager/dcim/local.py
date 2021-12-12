@@ -27,14 +27,14 @@ class Local(DcimBase):
         return [
             {
                 "asset_tag": "",
-                "ipmi": "",
+                "ipmi": self.config.local_ipmi_address,
                 "oob": "unknown",
                 "info": {
                     "id": socket.gethostname(),
                     "name": socket.gethostname(),
                     "display_name": socket.gethostname(),
                     "serial": "N/A",
-                    "ipmi": "",
+                    "ipmi": self.config.local_ipmi_address,
                     "manufacturer": "unknown",
                     "device_type": "",
                     "bios": "",
@@ -57,10 +57,13 @@ class Local(DcimBase):
     def set_custom_fields(self, oob_info, custom_fields):
         return False
 
-    def format_ipmitool_credentials(self, host, username, password):
+    def format_ipmitool_credentials(self, oob_info):
         # TODO: host, username, password should not be an argument
         return []
 
-    def format_freeipmi_credentials(self, host, username, password):
+    def format_freeipmi_credentials(self, oob_info):
         # TODO: host, username, password should not be an argument
         return []
+
+    def get_ipmi_credentials_from_dcim(self, oob_info):
+        return self.config.local_ipmi_address, None, None

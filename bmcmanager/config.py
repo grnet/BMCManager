@@ -20,8 +20,6 @@ import os
 from oslo_config import cfg
 from stevedore.extension import ExtensionManager
 
-from bmcmanager.oob import OOBS
-
 
 LOG = logging.getLogger(__name__)
 
@@ -49,6 +47,8 @@ DCIM_OPTIONS = [
     cfg.URIOpt(name="maas_api_url", schemes=["http", "https"]),
     cfg.StrOpt(name="maas_api_key", secret=True),
     cfg.URIOpt(name="maas_ui_url", schemes=["http", "https"]),
+    # Local
+    cfg.HostAddressOpt(name="local_ipmi_address"),
 ]
 
 OOB_OPTIONS = [
@@ -61,7 +61,7 @@ OOB_OPTIONS = [
 ]
 
 
-def load_config(args: argparse.Namespace):
+def load_config(args: argparse.Namespace, OOBS):
     """
     Load configuration
     """

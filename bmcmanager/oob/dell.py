@@ -27,19 +27,9 @@ LOG = logging.getLogger(__name__)
 
 class Dell(OobBase):
     def console(self):
-        ipmi_host = self.oob_info["ipmi"]
+        hostname, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
         try:
-            Popen(
-                [
-                    "moob",
-                    "-u",
-                    "{}".format(self.username),
-                    "-p",
-                    "{}".format(self.password),
-                    "-m",
-                    ipmi_host.replace("https://", ""),
-                ]
-            )
+            Popen(["moob", "-u", username, "-p", password, "-m", hostname])
         except OSError:
             LOG.exception('Please run "gem install moob"')
             sys.exit(10)
@@ -50,9 +40,7 @@ class Dell(OobBase):
 
         nbytes = 4096
         port = 22
-        hostname = self.oob_info["ipmi"].replace("https://", "")
-        username = self.username
-        password = self.password
+        hostname, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
 
         client = paramiko.Transport((hostname, port))
         client.connect(username=username, password=password)
@@ -95,7 +83,9 @@ class Dell(OobBase):
         time.sleep(180)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)
-        output = self._ssh("racadm techsupreport export -l {}".format(self.nfs_share))
+        output = self._ssh(
+            "racadm techsupreport export -l {}".format(self.config.nfs_share)
+        )
         jid = self._find_jid(output)
         view_output = self._ssh(jobqueue_view.format(jid))
         self._confirm_job(view_output)
@@ -107,13 +97,13 @@ class Dell(OobBase):
         schedule_updates_output = self._ssh(
             "racadm autoupdatescheduler create -l {} "
             "-f grnet_1.00_Catalog.xml -a 0 -time 08:30 "
-            "-dom * -wom * -dow * -rp 1".format(self.http_share)
+            "-dom * -wom * -dow * -rp 1".format(self.config.http_share)
         )
         print(enable_updates_output)
         print(schedule_updates_output)
 
     def upgrade(self):
-        http_addr = self.http_share.strip("http:/")
+        http_addr = self.config.http_share.strip("http:/")
         self._ssh(
             "racadm update -f {} -e {} -t HTTP -a FALSE".format(
                 "grnet_1.00_Catalog.xml", http_addr

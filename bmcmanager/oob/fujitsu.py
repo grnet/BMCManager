@@ -42,9 +42,7 @@ class Fujitsu(OobBase):
         """Setup digest auth"""
         realm = self._get_realm()
 
-        uri = self.oob_info["ipmi"]
-        username = self.username
-        password = self.password
+        uri, username, password = self.dcim.get_ipmi_credentials(self.oob_info)
 
         auth_handler = request.HTTPDigestAuthHandler()
         auth_handler.add_password(realm=realm, uri=uri, user=username, passwd=password)
