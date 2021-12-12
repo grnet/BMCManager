@@ -128,18 +128,18 @@ def bmcmanager_take_action(cmd, parsed_args):
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
         LOG.debug("Creating OOB object for %s", oob_info["oob"])
+        oob_class = oob_info["oob"]
 
         if oob_info["oob"] not in OOBS:
             LOG.info("OOB class %s not supported", oob_info["oob"])
             LOG.info("Falling back to OOB class %s", CONF.fallback_oob)
-            oob_info["oob"] = CONF.fallback_oob
+            oob_class = CONF.fallback_oob
 
         if oob_info["oob"] not in CONF._groups:
             LOG.error("OOB %s not found in configuration file", oob_info["oob"])
             sys.exit(-1)
 
-        oob_config = get_oob_config(dcim, oob_info)
-        oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
+        oob = OOBS.get(oob_class)(oob_info["oob"], parsed_args, dcim, oob_info)
 
         try:
             if hasattr(cmd, "oob_method"):
