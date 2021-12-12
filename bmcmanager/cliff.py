@@ -22,6 +22,8 @@ from bmcmanager.version import version_string
 
 
 class BMCManagerApp(App):
+    CONSOLE_MESSAGE_FORMAT = "%(levelname)-8s %(name)s [-] %(message)s"
+
     def __init__(self):
         super(BMCManagerApp, self).__init__(
             description="BMCManager",
