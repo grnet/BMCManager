@@ -21,7 +21,6 @@ class DCIM(BMCManagerServerCommand):
     open server page on DCIM
     """
 
-    dcim_fetch_secrets = False
     oob_method = "open_dcim"
 
 
@@ -31,7 +30,6 @@ class Web(BMCManagerServerCommand):
     """
 
     oob_method = "open"
-    dcim_fetch_secrets = False
 
 
 class Console(BMCManagerServerCommand):

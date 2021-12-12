@@ -57,7 +57,6 @@ class Check(BMCManagerServerCommand):
     """
 
     oob_method = "check_firmware"
-    dcim_fetch_secrets = False
 
 
 class UpgradeRPC(BMCManagerServerCommand):

@@ -142,8 +142,6 @@ class BMCManagerServerCommand(Command):
     base command for working with a server
     """
 
-    dcim_fetch_secrets = True
-
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         base_arguments(parser)
@@ -163,8 +161,6 @@ class BMCManagerServerGetCommand(ShowOne):
     base command for retrieving information for a server
     """
 
-    dcim_fetch_secrets = True
-
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         base_arguments(parser)
@@ -182,8 +178,6 @@ class BMCManagerServerListCommand(Lister):
     """
     base command for retrieving a list of information for a server
     """
-
-    dcim_fetch_secrets = True
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)

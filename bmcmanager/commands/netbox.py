@@ -24,7 +24,6 @@ class ListSecrets(BMCManagerServerListCommand):
     print available secrets from NetBox
     """
 
-    dcim_fetch_secrets = False
     oob_method = "get_secrets"
 
 
@@ -33,7 +32,6 @@ class SetSecret(BMCManagerServerCommand):
     set a secret on NetBox
     """
 
-    dcim_fetch_secrets = False
     oob_method = "set_secret"
 
     def get_parser(self, prog_name):
