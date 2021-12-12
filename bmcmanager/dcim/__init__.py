@@ -15,4 +15,4 @@
 
 from stevedore.extension import ExtensionManager
 
-DCIMS = [e.name for e in ExtensionManager("bmcmanager.dcim").extensions]
+DCIMS = ExtensionManager("bmcmanager.dcim").names()
