@@ -33,7 +33,8 @@ class List(BMCManagerServerListCommand):
     ]
 
     def take_action(self, parsed_args):
-        dcim = get_dcim(parsed_args, load_config(parsed_args))
+        load_config(parsed_args)
+        dcim = get_dcim(parsed_args)
         values = [[o["info"][col] for col in self.columns] for o in dcim.get_oobs()]
 
         return self.columns, values

@@ -16,7 +16,6 @@
 import argparse
 import logging
 import json
-import os
 import sys
 
 from cliff.command import Command
@@ -86,18 +85,18 @@ def server_arguments(parser):
     )
 
 
-def get_dcim(args, config):
+def get_dcim(args):
     """
     Get a configured DCIM from arguments and configuration
     """
-    dcim_name = args.dcim or config.default_dcim
+    dcim_name = args.dcim or CONF.default_dcim
     if not dcim_name:
         raise ValueError("DCIM name not specified, see {}".format(README))
 
-    if dcim_name not in config.available_dcims:
+    if dcim_name not in CONF.available_dcims:
         raise ValueError("DCIM {} not configured, see {}".format(dcim_name, README))
 
-    dcim_config = config[dcim_name]
+    dcim_config = CONF[dcim_name]
     if not dcim_config.type:
         raise ValueError("DCIM type not specified, possible values {}".format(DCIMS))
 
@@ -105,15 +104,15 @@ def get_dcim(args, config):
     return Class(args, dcim_config)
 
 
-def get_oob_config(config, dcim, oob_info, get_secret=True):
+def get_oob_config(dcim, oob_info, get_secret=True):
     """
     Get configuration for an OOB
     """
     oob_name = oob_info["oob"].lower()
-    oob_params = config[oob_name]
+    oob_params = CONF[oob_name]
 
     if get_secret and dcim.supports_secrets() and "credentials" in oob_params:
-        secret = dcim.get_secret(oob_params["credentials"], oob_info)
+        secret = dcim.get_secret(oob_params.credentials, oob_info)
         if secret["name"]:
             oob_params.username = secret["name"]
         if secret["plaintext"]:
@@ -124,8 +123,8 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
 
 def bmcmanager_take_action(cmd, parsed_args):
     cmd.parsed_args = parsed_args
-    cmd.config = load_config(parsed_args.config_file)
-    dcim = get_dcim(parsed_args, cmd.config)
+    load_config(parsed_args)
+    dcim = get_dcim(parsed_args)
 
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
@@ -140,7 +139,7 @@ def bmcmanager_take_action(cmd, parsed_args):
             LOG.error("OOB %s not found in configuration file", oob_info["oob"])
             sys.exit(-1)
 
-        oob_config = get_oob_config(cmd.config, dcim, oob_info)
+        oob_config = get_oob_config(dcim, oob_info)
         oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
 
         try:
