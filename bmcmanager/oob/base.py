@@ -145,10 +145,12 @@ class OobBase(object):
         return self._check_output(self._ipmitool_cmd(command))
 
     def _check_call(self, command):
+        command = [str(c) for c in command]
         LOG.debug("Executing %s", shlex.join(command))
         return subprocess.check_call(command)
 
     def _check_output(self, command):
+        command = [str(c) for c in command]
         LOG.debug("Executing %s", shlex.join(command))
         return subprocess.check_output(command).decode("utf-8")
 

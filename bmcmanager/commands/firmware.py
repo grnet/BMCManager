@@ -146,6 +146,7 @@ class LatestGet(Lister):
         return parser
 
     def _check_output(self, command):
+        command = [str(c) for c in command]
         LOG.debug("Executing %s", shlex.join(command))
         subprocess.check_call(command)
 
