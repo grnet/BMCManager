@@ -24,7 +24,7 @@ from cliff.show import ShowOne
 from cliff.lister import Lister
 from stevedore.driver import DriverManager
 
-from bmcmanager.config import load_config
+from bmcmanager.config import load_config, CONF
 
 from bmcmanager.dcim import DCIMS
 from bmcmanager.oob import OOBS
@@ -130,13 +130,16 @@ def bmcmanager_take_action(cmd, parsed_args):
 
     idx = None
     for idx, oob_info in enumerate(dcim.get_oobs()):
-        oob_name = oob_info["oob"]
-        LOG.debug("Creating OOB object for %s", oob_name)
+        LOG.debug("Creating OOB object for %s", oob_info["oob"])
 
-        if oob_name not in OOBS or oob_name not in cmd.config:
-            LOG.info("OOB class %s not supported", oob_name)
-            oob_info["oob"] = cmd.config.fallback_oob
-            LOG.info("Falling back to OOB class %s", cmd.config.fallback_oob)
+        if oob_info["oob"] not in OOBS:
+            LOG.info("OOB class %s not supported", oob_info["oob"])
+            LOG.info("Falling back to OOB class %s", CONF.fallback_oob)
+            oob_info["oob"] = CONF.fallback_oob
+
+        if oob_info["oob"] not in CONF._groups:
+            LOG.error("OOB %s not found in configuration file", oob_info["oob"])
+            sys.exit(-1)
 
         oob_config = get_oob_config(cmd.config, dcim, oob_info)
         oob = OOBS.get(oob_info["oob"])(parsed_args, dcim, oob_config, oob_info)
