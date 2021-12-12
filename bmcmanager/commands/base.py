@@ -76,16 +76,12 @@ def server_arguments(parser):
     Add server selection arguments
     """
     parser.add_argument("server", help="server name")
-    parser.add_argument(
-        "-d",
-        "--dcim",
-        help="name of DCIM to use",
-    )
+    parser.add_argument("-d", "--dcim", help="name of DCIM to use")
     parser.add_argument(
         "-t",
         "--type",
-        help="unit type",
-        choices=["name", "rack", "rack-unit", "serial"],
+        help="unit query type (NetBox only)",
+        choices=["search", "rack", "rack-unit", "serial"],
         default="search",
     )
 
