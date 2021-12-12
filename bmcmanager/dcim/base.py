@@ -15,15 +15,18 @@
 
 from typing import List
 
+from bmcmanager.config import CONF
+
 
 class DcimBase(object):
     """
     Base DCIM class
     """
 
-    def __init__(self, args, config):
+    def __init__(self, name, args):
+        self.name = name
         self.args = args
-        self.config = config
+        self.config = CONF[name]
         self.identifier = args.server
 
     def get_oobs(self):

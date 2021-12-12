@@ -25,10 +25,12 @@ LOG = logging.getLogger(__name__)
 
 
 class Netbox(DcimBase):
-    def __init__(self, args, config):
-        super(Netbox, self).__init__(args, config)
+    def __init__(self, name, args):
+        super(Netbox, self).__init__(name, args)
 
         self.info = self._retrieve_info()
+        if not self.config.netbox_url:
+            raise DcimError("NetBox URL is not set, see README.md")
 
     def _get_params(self):
         if self.args.type == "serial":

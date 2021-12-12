@@ -18,9 +18,9 @@ import logging
 import os
 
 from oslo_config import cfg
+from stevedore.extension import ExtensionManager
 
 from bmcmanager.oob import OOBS
-from bmcmanager.dcim import DCIMS
 
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ DEFAULT_OPTIONS = [
 CONF.register_opts(DEFAULT_OPTIONS)
 
 DCIM_OPTIONS = [
-    cfg.StrOpt(name="type", choices=DCIMS),
+    cfg.StrOpt(name="type", choices=ExtensionManager("bmcmanager.dcim").names()),
     # NetBox
     cfg.URIOpt(name="netbox_url", schemes=["http", "https"]),
     cfg.StrOpt(name="netbox_api_token", secret=True),

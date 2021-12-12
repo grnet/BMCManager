@@ -23,10 +23,6 @@ class Local(DcimBase):
     Local DCIM class.
     """
 
-    def __init__(self, args, config):
-        self.args = args
-        self.config = config
-
     def get_oobs(self):
         return [
             {

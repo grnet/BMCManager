@@ -23,8 +23,8 @@ LOG = logging.getLogger(__name__)
 
 
 class MaaS(DcimBase):
-    def __init__(self, args, config):
-        super(MaaS, self).__init__(args, config)
+    def __init__(self, name, args):
+        super(MaaS, self).__init__(name, args)
         self._session = None
 
         if not self.config.maas_api_url:

@@ -27,7 +27,6 @@ from bmcmanager.config import load_config, CONF
 
 from bmcmanager.dcim import DCIMS
 from bmcmanager.oob import OOBS
-from bmcmanager.errors import BMCManagerError
 from bmcmanager import exitcode
 
 LOG = logging.getLogger(__name__)
@@ -98,10 +97,10 @@ def get_dcim(args):
 
     dcim_config = CONF[dcim_name]
     if not dcim_config.type:
-        raise ValueError("DCIM type not specified, possible values {}".format(DCIMS))
+        raise ValueError("DCIM type is required, possible values {}".format(DCIMS))
 
     Class = DriverManager("bmcmanager.dcim", dcim_config.type).driver
-    return Class(args, dcim_config)
+    return Class(dcim_name, args)
 
 
 def get_oob_config(dcim, oob_info, get_secret=True):
