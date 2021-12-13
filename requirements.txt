@@ -3,3 +3,4 @@ paramiko==2.7.1
 requests==2.24.0
 cliff==3.4.0
 python-libmaas==0.6.6
+oslo.config==8.7.1
