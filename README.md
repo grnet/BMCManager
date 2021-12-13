@@ -4,7 +4,9 @@
 
 [`bmcmanager`](https://github.com/grnet/bmcmanager.git) is a tool for performing operations on rack units. It originated as a [`rackops`](https://github.com/grnet/rackops.git) fork, but has since been re-written almost from scratch, offering lots of additional functionality, bug-fixes and all-around improvements.
 
-`bmcmanager` supports Lenovo, Dell and Fujitsu servers, and relies on [`NetBox`](https://netbox.readthedocs.io/en/stable/) for DCIM and IPAM. There is also expiremental support for [`MaaS`](https://maas.io).
+`bmcmananger` supports [NetBox](https://netbox.readthedocs.io/en/stable) and [MaaS](https://maas.io) for DCIM and IPAM.
+
+`bmcmanager` supports Lenovo, Dell and Fujitsu servers out of the box. It also works with any hardware that supports the IPMI 2.0 protocol.
 
 `bmcmanager` is released under the terms of the GPL-3.0 license.
 
@@ -85,68 +87,80 @@ Docker Limitations:
 
 ## Configuration
 
-`bmcmanager` uses a single configuration file. It looks in `~/.config/bmcmanager` and `$XDG_CONFIG_HOME/bmcmanager` by default, but a different configuration file can be chosen by setting the `--config-file` command line argument.
+`bmcmanager` uses a single configuration file. By default, it looks for configuration in the following files:
 
-The configuration file should have this form:
+- `~/.config/bmcmanager.conf`
+- `~/.bmcmanager/bmcmanager.conf`
+- `bmcmanager.conf`
+- `/etc/bmcmanager.conf`
+- `/etc/bmcmananger/bmcmanager.conf`
+- `~/snap/bmcmanager/common/bmcmanager.conf` (for snap installs)
+
+The configuration file should have this form. Also refer to the [sample config file](./bmcmanager.sample.conf):
 
 ```ini
-;; Configuration of "netbox" DCIM
+[DEFAULT]
+; Define three DCIMs, "netbox", "maas" and "local"
+available_dcims = netbox, maas, local
+
+; Use the "netbox" DCIM by default.
+default_dcim = netbox
+
+; Map unknown manufacturers to an OOB class implementation for the bmcmanager commands.
+; For example, for servers where the manufacturer is `supermicro` or `hp`, use the `base`
+; OOB class
+oob_overrides = supermicro:base, hp:base
+
+; Configuration of the "local" DCIM.
+[local]
+type = local
+
+; Configuration of the "netbox" DCIM.
 [netbox]
-; Required
-api_url = <netbox_api_url>
-; [Optional] Limit bmcmanager to query for certain device types only.
-device_type_ids = <id1>, <id2>, ...
-; Only if using NetBox secrets for IPMI credentials
-netbox_token = <netbox_api_token>
-session_key = <netbox_session_key>
-; [Optional] Timeout when connecting to NetBox (in seconds).
-timeout = 10
+type = netbox
+netbox_url = https://netbox.example.com/
+netbox_api_token = <netbox_api_token>
 
-;; Configure of "maas" DCIM. Only required if using MaaS [Expiremental].
+; If using NetBox secrets for IPMI credentials.
+; Make sure to configure a secret with role `ipmi-credentials` for each server.
+; The secret name is the IPMI username, and plaintext is the IPMI password.
+netbox_session_key = <netbox_session_key>
+netbox_credentials_secret = ipmi-credentials
+
+; Configuration section of the "maas" DCIM.
 [maas]
-; Required. Example: https://maas.internal.deployment:5240/MAAS/api/2.0
-api_url = <maas_api_url>
-; Required. Generate from MaaS GUI > User > API Keys > Generate MAAS API key.
-; Example: AAAAAAAAAAA:BBBBBBBBBBBBBBB:CCCCCCCCCCCCCCCCC
-api_key = <maas_api_key>
-; Required for `bmcmanager open dcim` command. This is the root MaaS GUI URL.
-; Example: https://maas.internal.deployment/
-ui_url = <maas_ui_url>
+type = maas
+maas_api_url = https://maas.internal.deployment:5240/MAAS/api/2.0
+maas_api_key = <maas_api_key>
+maas_ui_url = https://maasa.internal.deployment:5240/
 
-;; Configuration of "lenovo" OOB
+; Configuration of "lenovo" OOB. This applies to servers with manufacturer "lenovo".
+; Add similar sections for each manufacturer (e.g. `dell`, `hp`, ...)
 [lenovo]
-; IPMI credentials
+; Default IPMI credentials. These will only be used if bmcmanager cannot retrieve
+; them from the DCIM.
 username = <username>
 password = <password>
-
-; Use secret with role <secret_role> as IPMI credentials. Secret name will
-; be used as username, secret plaintext will be used as password. You need to
-; set `netbox_token` and `session_key` above for this to work.
-; If no secret is available, then `username` and `password` defined above will
-; be used instead.
-credentials = <secret_role>
 
 ; [optional] Configure NFS share and HTTP share (used by some commands)
 nfs_share = "IP:/path/"
 http_share = "http://IP/path/"
 
-; [optional] Latest firmware versions to check against
-; Used by the `bmcmanager firmware check` command
-bios = <MAJOR.MINOR.PATCH>
-tsm = <MAJOR.MINOR.PATCH>
-psu_<model> = <MAJOR.MINOR.PATCH>
-
 ; [optional] Number of PSUs to expect per server
 ; Used by the `bmcmanager firmware check` command
 expected_psus = 2
+
+; Mapping of expected firmware versions for each server component.
+; Used by the `bmcmanger firmware check` command
+expected_firmware_versions = bios:3.4.0, tsm:5.14.23
 ```
 
-Some configuration can be overriden using environment variables:
+To use:
 
-- `BMCMANAGER_USERNAME`
-- `BMCMANAGER_PASSWORD`
-- `BMCMANAGER_NFS_SHARE`
-- `BMCMANAGER_HTTP_SHARE`
+```bash
+$ bmcmanager power status lar0510
+$ bmcmanager power status lar0510 --dcim maas
+```
 
 ## Examples
 
