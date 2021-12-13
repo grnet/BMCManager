@@ -176,7 +176,7 @@ def load_config(args: argparse.Namespace, OOBS):
             os.path.expandvars("$XDG_CONFIG_HOME/bmcmanager.conf"),
             os.path.expandvars("$XDG_CONFIG_HOME/.config/bmcmanager.conf"),
             os.path.expandvars("$SNAP_COMMON/bmcmanager.conf"),
-            os.path.expandvars("$SNAP_COMMON/bmcmanager.conf"),
+            os.path.expandvars("$SNAP_COMMON/.config/bmcmanager.conf"),
         ]
         config_files = [c for c in config_files if os.path.exists(c)]
 
