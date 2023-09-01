@@ -127,6 +127,7 @@ class OobBase(object):
             "lanplus",
             "-H",
             host,
+            "-C 17",
         ]
 
     # command is an array
