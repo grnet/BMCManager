@@ -4,9 +4,14 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [v1.3.0] (2023-09-04)
+
 ### Added
 
 ### Changed
+
+- Changed 'display_name' field to 'display' since 'display_name' field
+  has been removed in Netbox 2.11.0
 
 ### Fixed
 
