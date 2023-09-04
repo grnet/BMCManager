@@ -118,6 +118,7 @@ def get_oob_config(config, dcim, oob_info, get_secret=True):
             cfg["username"] = secret["name"]
         if secret["plaintext"]:
             cfg["password"] = secret["plaintext"]
+    print(cfg["username"], cfg["password"], oob_params, oob_info)
 
     cfg["username"] = os.getenv("BMCMANAGER_USERNAME", cfg["username"])
     cfg["password"] = os.getenv("BMCMANAGER_PASSWORD", cfg["password"])
