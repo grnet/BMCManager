@@ -117,7 +117,7 @@ class Netbox(DcimBase):
         return {
             "id": result["id"],
             "name": result["name"],
-            "display_name": result["display_name"],
+            "display": result["display"],
             "serial": result["serial"],
             "ipmi": result["custom_fields"]["IPMI"] or "unknown-address",
             "manufacturer": result["device_type"]["manufacturer"]["slug"],
